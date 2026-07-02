@@ -26,4 +26,29 @@ String Esp32WebServer::arg(const char* name) {
     return _server.arg(name);
 }
 
+void Esp32WebServer::onUpload(const char* path,
+                               std::function<void()> completionHandler,
+                               std::function<void(UploadStatus, const uint8_t*, size_t)> uploadHandler) {
+    _server.on(path, HTTP_POST,
+        completionHandler,
+        [this, uploadHandler]() {
+            HTTPUpload& upload = _server.upload();
+            switch (upload.status) {
+                case UPLOAD_FILE_START:
+                    uploadHandler(UploadStatus::Start, nullptr, 0);
+                    break;
+                case UPLOAD_FILE_WRITE:
+                    uploadHandler(UploadStatus::Write, upload.buf, upload.currentSize);
+                    break;
+                case UPLOAD_FILE_END:
+                    uploadHandler(UploadStatus::End, nullptr, upload.totalSize);
+                    break;
+                case UPLOAD_FILE_ABORTED:
+                    uploadHandler(UploadStatus::Abort, nullptr, 0);
+                    break;
+            }
+        }
+    );
+}
+
 } // namespace hal

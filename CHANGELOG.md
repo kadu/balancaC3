@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-01
+
+### Added
+- HAL layer: `IOta` + `Esp32Ota` (ArduinoOTA para upload por IP + `Update.h` para upload HTTP)
+- `IWebServer::onUpload()` para suporte a upload multipart no browser
+- Core `OtaManager`: inicia ArduinoOTA ao conectar, registra rotas `/update` (GET + POST)
+- Página `/update` com drag-and-drop de `.bin`, barra de progresso em tempo real e tema claro/escuro
+- Botão "Atualizar Firmware (OTA)" na página `/config`
+- Serial imprime progresso OTA por percentual e resultado final
+- Novos eventos: `OtaStarted`, `OtaProgress` (payload: uint8_t %), `OtaSuccess`, `OtaError`
+- `EventBus::MAX_HANDLERS` expandido de 16 para 32
+
+### Removed
+- Hello World impresso na serial ao boot
+- Dependência de `IClock` removida de `Application` (não mais necessária)
+
 ## [0.3.0] - 2026-07-01
 
 ### Added

@@ -89,6 +89,7 @@ input:focus{border-color:var(--btn)}
 </div>
 <div class="card">
   <h3>Dispositivo</h3>
+  <a class="btn" href="/update" style="display:block;text-align:center;text-decoration:none;padding:.7em;background:var(--btn);color:#fff;border-radius:6px;margin-bottom:.4em">&#128190; Atualizar Firmware (OTA)</a>
   <button class="btn" onclick="restartDevice()">Reiniciar dispositivo</button>
   <hr class="sep">
   <button class="btn dan" onclick="showConfirm()">Apagar credenciais e reiniciar</button>
