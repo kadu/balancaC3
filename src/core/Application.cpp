@@ -9,8 +9,14 @@ Application::Application(hal::ISerial& serial, hal::IClock& clock, events::Event
 void Application::setup() {
     _serial.begin(115200);
 
-    _eventBus.subscribe(events::EventType::SystemStarted, this);
-    _eventBus.subscribe(events::EventType::SystemReady,   this);
+    _eventBus.subscribe(events::EventType::SystemStarted,      this);
+    _eventBus.subscribe(events::EventType::SystemReady,        this);
+    _eventBus.subscribe(events::EventType::WifiConnecting,     this);
+    _eventBus.subscribe(events::EventType::WifiConnected,      this);
+    _eventBus.subscribe(events::EventType::WifiDisconnected,   this);
+    _eventBus.subscribe(events::EventType::WifiConfigRequired, this);
+    _eventBus.subscribe(events::EventType::WifiCredentialsSaved, this);
+    _eventBus.subscribe(events::EventType::WebServerStarted,     this);
 
     _eventBus.publish({events::EventType::SystemStarted});
 }
@@ -43,6 +49,33 @@ void Application::onEvent(const events::Event& event) {
 
         case events::EventType::SystemReady:
             _serial.println("[System] Ready.");
+            break;
+
+        case events::EventType::WifiConnecting:
+            _serial.println("[WiFi] Conectando...");
+            break;
+
+        case events::EventType::WifiConnected:
+            _serial.print("[WiFi] Conectado! IP: ");
+            _serial.println(event.payload ? static_cast<const char*>(event.payload) : "?");
+            break;
+
+        case events::EventType::WifiDisconnected:
+            _serial.println("[WiFi] Conexao perdida. Reconectando...");
+            break;
+
+        case events::EventType::WifiConfigRequired:
+            _serial.println("[WiFi] Sem configuracao. Rede AP: BalancaC3-Config");
+            _serial.println("[WiFi] Acesse http://192.168.4.1 para configurar.");
+            break;
+
+        case events::EventType::WifiCredentialsSaved:
+            _serial.println("[WiFi] Credenciais salvas. Conectando...");
+            break;
+
+        case events::EventType::WebServerStarted:
+            _serial.print("[Web] Servidor iniciado em http://");
+            _serial.println(event.payload ? static_cast<const char*>(event.payload) : "?");
             break;
 
         default:
