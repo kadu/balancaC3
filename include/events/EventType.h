@@ -15,6 +15,10 @@ enum class EventType : uint8_t {
     WebServerStarted,
     DeviceRestart,
     WifiCredentialsCleared,
+    OtaStarted,
+    OtaProgress,
+    OtaSuccess,
+    OtaError,
 };
 
 } // namespace events
