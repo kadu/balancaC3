@@ -13,6 +13,8 @@ enum class EventType : uint8_t {
     WifiConfigRequired,
     WifiCredentialsSaved,
     WebServerStarted,
+    DeviceRestart,
+    WifiCredentialsCleared,
 };
 
 } // namespace events

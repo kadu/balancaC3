@@ -22,4 +22,8 @@ void Esp32WebServer::send(uint16_t code, const char* contentType, const char* bo
     _server.send(code, contentType, body);
 }
 
+String Esp32WebServer::arg(const char* name) {
+    return _server.arg(name);
+}
+
 } // namespace hal

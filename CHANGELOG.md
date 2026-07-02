@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-01
+
+### Added
+- HAL layer: `IDevice` + `Esp32Device` (wraps `ESP.restart()`)
+- `WebApp`: página `/config` com seção WiFi e seção Dispositivo
+- Endpoint `GET /config/ssid` — devolve o SSID salvo no NVS
+- Endpoint `POST /config/wifi` — salva novas credenciais e reinicia
+- Endpoint `POST /config/restart` — reinicia o dispositivo
+- Endpoint `POST /config/reset` — apaga credenciais NVS e reinicia (abre portal captive no próximo boot)
+- Rede atualmente configurada destacada na lista com borda, fundo e badge "✓ conectada"
+- Reinício com delay de 800 ms para garantir entrega da resposta HTTP ao browser
+- Serial imprime URL de configurações ao subir o servidor
+- Novos eventos: `WifiCredentialsCleared`, `DeviceRestart`
+
 ## [0.2.0] - 2026-07-01
 
 ### Added

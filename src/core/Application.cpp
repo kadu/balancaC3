@@ -16,7 +16,9 @@ void Application::setup() {
     _eventBus.subscribe(events::EventType::WifiDisconnected,   this);
     _eventBus.subscribe(events::EventType::WifiConfigRequired, this);
     _eventBus.subscribe(events::EventType::WifiCredentialsSaved, this);
-    _eventBus.subscribe(events::EventType::WebServerStarted,     this);
+    _eventBus.subscribe(events::EventType::WebServerStarted,      this);
+    _eventBus.subscribe(events::EventType::WifiCredentialsCleared, this);
+    _eventBus.subscribe(events::EventType::DeviceRestart,          this);
 
     _eventBus.publish({events::EventType::SystemStarted});
 }
@@ -76,6 +78,17 @@ void Application::onEvent(const events::Event& event) {
         case events::EventType::WebServerStarted:
             _serial.print("[Web] Servidor iniciado em http://");
             _serial.println(event.payload ? static_cast<const char*>(event.payload) : "?");
+            _serial.print("[Web] Configuracoes em http://");
+            _serial.print(event.payload ? static_cast<const char*>(event.payload) : "?");
+            _serial.println("/config");
+            break;
+
+        case events::EventType::WifiCredentialsCleared:
+            _serial.println("[Config] Credenciais apagadas. Reiniciando...");
+            break;
+
+        case events::EventType::DeviceRestart:
+            _serial.println("[Config] Reiniciando dispositivo...");
             break;
 
         default:
