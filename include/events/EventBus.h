@@ -7,7 +7,7 @@
 
 namespace events {
 
-static constexpr size_t MAX_HANDLERS = 8;
+static constexpr size_t MAX_HANDLERS = 32;
 static constexpr size_t MAX_QUEUE_SIZE = 16;
 
 class EventBus {

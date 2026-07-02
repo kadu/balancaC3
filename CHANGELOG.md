@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-01
+
+### Added
+- HAL layer: `IOta` + `Esp32Ota` (ArduinoOTA para upload por IP + `Update.h` para upload HTTP)
+- `IWebServer::onUpload()` para suporte a upload multipart no browser
+- Core `OtaManager`: inicia ArduinoOTA ao conectar, registra rotas `/update` (GET + POST)
+- Página `/update` com drag-and-drop de `.bin`, barra de progresso em tempo real e tema claro/escuro
+- Botão "Atualizar Firmware (OTA)" na página `/config`
+- Serial imprime progresso OTA por percentual e resultado final
+- Novos eventos: `OtaStarted`, `OtaProgress` (payload: uint8_t %), `OtaSuccess`, `OtaError`
+- `EventBus::MAX_HANDLERS` expandido de 16 para 32
+
+### Removed
+- Hello World impresso na serial ao boot
+- Dependência de `IClock` removida de `Application` (não mais necessária)
+
+## [0.3.0] - 2026-07-01
+
+### Added
+- HAL layer: `IDevice` + `Esp32Device` (wraps `ESP.restart()`)
+- `WebApp`: página `/config` com seção WiFi e seção Dispositivo
+- Endpoint `GET /config/ssid` — devolve o SSID salvo no NVS
+- Endpoint `POST /config/wifi` — salva novas credenciais e reinicia
+- Endpoint `POST /config/restart` — reinicia o dispositivo
+- Endpoint `POST /config/reset` — apaga credenciais NVS e reinicia (abre portal captive no próximo boot)
+- Rede atualmente configurada destacada na lista com borda, fundo e badge "✓ conectada"
+- Reinício com delay de 800 ms para garantir entrega da resposta HTTP ao browser
+- Serial imprime URL de configurações ao subir o servidor
+- Novos eventos: `WifiCredentialsCleared`, `DeviceRestart`
+
+## [0.2.0] - 2026-07-01
+
+### Added
+- HAL layer: `IWifi` + `Esp32Wifi` (connect/disconnect/AP/scan/localIP)
+- HAL layer: `IStorage` + `Esp32Storage` (NVS via `Preferences.h`)
+- HAL layer: `ICaptivePortal` + `Esp32CaptivePortal` (DNS + HTTP server, portal HTML embarcado)
+- HAL layer: `IWebServer` + `Esp32WebServer`
+- Core `WifiManager`: máquina de estados (Connecting → Connected → ConfigMode) com reconexão automática e timeout de 15 s
+- Core `WebApp`: servidor HTTP na porta 80, sobe ao conectar e derruba no modo AP
+- Portal captive com tema claro/escuro (detecção automática + alternância manual), campo SSID editável para redes ocultas, listagem de redes com sinal
+- Credenciais WiFi persistidas em NVS; reconecta automaticamente no boot
+- Eventos: `WifiConnecting`, `WifiConnected` (payload: IP), `WifiDisconnected`, `WifiConfigRequired`, `WifiCredentialsSaved`, `WebServerStarted` (payload: IP)
+- Serial imprime IP ao conectar e URL do servidor web ao subir
+
 ## [0.1.0] - 2026-06-30
 
 ### Added

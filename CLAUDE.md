@@ -90,7 +90,8 @@ Each feature follows this exact sequence — **no exceptions**:
    - Update `CHANGELOG.md` under `[Unreleased]` with a concise entry
    - `git add -A && git commit -m "feat(<scope>): <description>"`
 6. **Merge**: `git checkout develop && git merge --no-ff feature/<name> && git branch -d feature/<name>`
-7. **Next feature**: only start after the previous commit is done and confirmed
+7. **Push**: `git push origin develop` — push immediately after every merge, no exceptions
+8. **Next feature**: only start after push succeeds
 
 ### Interruption rule
 
