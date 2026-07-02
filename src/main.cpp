@@ -8,11 +8,13 @@
 #include "hal/Esp32WebServer.h"
 #include "hal/Esp32Device.h"
 #include "hal/Esp32Ota.h"
+#include "hal/Esp32Display.h"
 #include "events/EventBus.h"
 #include "core/Application.h"
 #include "core/WifiManager.h"
 #include "core/WebApp.h"
 #include "core/OtaManager.h"
+#include "core/DisplayManager.h"
 
 static hal::Esp32Serial        serial;
 static hal::Esp32Clock         espClock;
@@ -22,14 +24,17 @@ static hal::Esp32CaptivePortal portal(espWifi);
 static hal::Esp32WebServer     webServer;
 static hal::Esp32Device        device;
 static hal::Esp32Ota           ota;
+static hal::Esp32Display       display;
 static events::EventBus        eventBus;
 static core::Application       app(serial, eventBus);
 static core::WifiManager       wifiManager(espWifi, storage, portal, espClock, eventBus);
 static core::WebApp            webApp(webServer, espWifi, storage, device, eventBus);
 static core::OtaManager        otaManager(ota, webServer, device, eventBus);
+static core::DisplayManager    displayManager(display, eventBus);
 
 void setup() {
     app.setup();
+    displayManager.begin();
     wifiManager.begin();
     webApp.begin();
     otaManager.begin();

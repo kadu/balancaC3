@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-01
+
+### Added
+- HAL layer: `IDisplay` + `Esp32Display` (U8g2, SSD1306 128x64 I2C — SDA=8, SCL=9)
+- Core `DisplayManager`: ouve eventos WiFi e atualiza o display
+  - `WifiConnecting` / `WifiDisconnected` → "Conectando..."
+  - `WifiConnected` → "WiFi / Conectado / `<IP>`"
+  - `WifiConfigRequired` → "Modo configuracao / BalancaC3-Config / 192.168.4.1"
+- Dependência `olikraus/U8g2 @ ^2.35.19` adicionada ao `platformio.ini`
+- Pinos I2C definidos em `config.h` (`PIN_I2C_SDA=8`, `PIN_I2C_SCL=9`, `OLED_I2C_ADDR=0x3C`)
+
 ## [0.4.0] - 2026-07-01
 
 ### Added
