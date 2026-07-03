@@ -39,6 +39,8 @@ private:
     void handleConfigReset();
     void handleNetworks();
     void handleCurrentSsid();
+    void handleConfigLedGet();
+    void handleConfigLedSet();
 };
 
 } // namespace core
