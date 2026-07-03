@@ -20,6 +20,8 @@ enum class EventType : uint8_t {
     OtaSuccess,
     OtaError,
     LedBrightnessChanged,
+    Button1Pressed,
+    Button2Pressed,
 };
 
 } // namespace events

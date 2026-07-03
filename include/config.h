@@ -26,3 +26,7 @@ static constexpr uint8_t  LED_BRIGHTNESS_DEFAULT  = 128;
 
 // NVS storage keys (LED)
 static constexpr char STORAGE_KEY_LED_BRIGHTNESS[] = "led_bright";
+
+// Buttons
+static constexpr uint8_t PIN_BUTTON_1 = 9;
+static constexpr uint8_t PIN_BUTTON_2 = 10;
