@@ -88,6 +88,13 @@ input:focus{border-color:var(--btn)}
   <div class="msg" id="wifi-msg"></div>
 </div>
 <div class="card">
+  <h3>LEDs</h3>
+  <label>Brilho (<span id="bval"></span>)</label>
+  <input id="bright" type="range" min="10" max="255" style="width:100%;margin:.3em 0"
+    oninput="D.getElementById('bval').textContent=this.value" onchange="saveBright(this.value)">
+  <div class="msg" id="led-msg"></div>
+</div>
+<div class="card">
   <h3>Dispositivo</h3>
   <a class="btn" href="/update" style="display:block;text-align:center;text-decoration:none;padding:.7em;background:var(--btn);color:#fff;border-radius:6px;margin-bottom:.4em">&#128190; Atualizar Firmware (OTA)</a>
   <button class="btn" onclick="restartDevice()">Reiniciar dispositivo</button>
@@ -129,6 +136,15 @@ Promise.all([
 }).catch(function(){D.getElementById('nets').textContent='Falha no scan.'});
 
 function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'ok':'err');m.textContent=txt;m.style.display='block'}
+fetch('/config/led').then(function(r){return r.text()}).then(function(v){
+  var s=D.getElementById('bright');s.value=v;D.getElementById('bval').textContent=v;
+}).catch(function(){});
+function saveBright(v){
+  fetch('/config/led',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'brightness='+v})
+  .then(function(){showMsg('led-msg',true,'Brilho salvo!')})
+  .catch(function(){showMsg('led-msg',false,'Erro ao salvar.')});
+}
 
 function saveWifi(){
   var ssid=D.getElementById('ssid').value.trim();
@@ -197,6 +213,10 @@ void WebApp::startServer(const char* ip) {
     _server.on("/config/restart", [this]() { handleConfigRestart(); });
     _server.on("/config/reset",   [this]() { handleConfigReset(); });
     _server.on("/config/ssid",    [this]() { handleCurrentSsid(); });
+    _server.on("/config/led",     [this]() {
+        if (_server.arg("brightness").isEmpty()) handleConfigLedGet();
+        else handleConfigLedSet();
+    });
     _server.begin(80);
     _running = true;
     _eventBus.publish({events::EventType::WebServerStarted, ip});
@@ -253,6 +273,26 @@ void WebApp::handleCurrentSsid() {
     char ssid[33] = {};
     _storage.getString(STORAGE_KEY_WIFI_SSID, ssid, sizeof(ssid));
     _server.send(200, "text/plain", ssid);
+}
+
+void WebApp::handleConfigLedGet() {
+    char buf[8] = {};
+    if (!_storage.getString(STORAGE_KEY_LED_BRIGHTNESS, buf, sizeof(buf))) {
+        snprintf(buf, sizeof(buf), "%u", LED_BRIGHTNESS_DEFAULT);
+    }
+    _server.send(200, "text/plain", buf);
+}
+
+void WebApp::handleConfigLedSet() {
+    String val = _server.arg("brightness");
+    if (val.isEmpty()) { _server.send(400, "text/plain", "missing brightness"); return; }
+    int v = val.toInt();
+    if (v < 10 || v > 255) { _server.send(400, "text/plain", "out of range"); return; }
+    _storage.putString(STORAGE_KEY_LED_BRIGHTNESS, val.c_str());
+    static uint8_t bright;
+    bright = static_cast<uint8_t>(v);
+    _eventBus.publish({events::EventType::LedBrightnessChanged, &bright});
+    _server.send(200, "text/plain", "OK");
 }
 
 void WebApp::handleConfigReset() {

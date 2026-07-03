@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-01
+
+### Added
+- HAL layer: `ILedStrip` + `Esp32LedStrip` (FastLED, WS2812B GRB, GPIO 5, 8 LEDs)
+- Core `LedManager`: máquina de estados não-bloqueante com animações por evento
+  - `SystemStarted` → branco sólido 800ms
+  - `WifiConnecting` / `WifiDisconnected` → pisca verde 500ms
+  - `WifiConnected` → verde sólido 3s → fadeout suave 1.5s
+  - `WifiConfigRequired` → respiração amarela contínua (sine wave 3s)
+  - `OtaProgress` → barra de progresso azul proporcional ao %
+  - `OtaSuccess` → azul sólido 1s → apaga
+  - `OtaError` → 3 flashes vermelhos → apaga
+- Slider de brilho (10–255) na página `/config` → seção LEDs
+- Endpoints `GET /config/led` e `POST /config/led` (brightness persistido em NVS)
+- Brilho aplicado instantaneamente via evento `LedBrightnessChanged` sem reiniciar
+- `fastled/FastLED @ ^3.9.7` adicionado ao `platformio.ini`
+- Constantes `PIN_LED_STRIP=5`, `LED_COUNT=8`, `LED_BRIGHTNESS_DEFAULT=128` em `config.h`
+
 ## [0.5.0] - 2026-07-01
 
 ### Added
