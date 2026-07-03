@@ -26,6 +26,7 @@ private:
         OtaProgress,
         OtaSuccess,
         OtaError,
+        ButtonFlash,
         Idle,
     };
 
@@ -50,8 +51,11 @@ private:
     void tickOtaProgress();
     void tickOtaSuccess();
     void tickOtaError();
+    void tickButtonFlash();
 
     uint32_t elapsed() const;
+
+    State    _prevState    = State::Idle;
 };
 
 } // namespace core

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-01
+
+### Added
+- HAL layer: `IButton` + `Esp32Button` (OneButton v2, active-low com pull-up interno)
+- Static trampolines para compatibilidade com a API `void*(void*)` do OneButton
+- Core `ButtonManager`: registra callbacks e publica `Button1Pressed` / `Button2Pressed`
+- `LedManager`: novo estado `ButtonFlash` — flash ciano (0, 220, 255) de 80ms ao pressionar, retorna ao estado anterior sem interromper OTA
+- Pinos `PIN_BUTTON_1=9`, `PIN_BUTTON_2=10` em `config.h`
+- Novos eventos: `Button1Pressed`, `Button2Pressed`
+- `mathertel/OneButton @ ^2.6.1` adicionado ao `platformio.ini`
+
 ## [0.6.0] - 2026-07-01
 
 ### Added
