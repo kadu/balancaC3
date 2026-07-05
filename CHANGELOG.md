@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-04
+
+### Added
+- HAL layer: `IScale` + `Esp32Scale` (NAU7802, 10 SPS, ganho 128×, HW I2C)
+- Core `ScaleManager`: acumulador não-bloqueante de amostras, calibração de dois passos, persistência em NVS
+- Endpoints `/scale/weight` (JSON com grams, raw, calibrated, ready), `/scale/tare`, `/scale/calibrate`
+- Tela inicial com display de peso em tempo real (polling 500ms): peso em g/kg se calibrado, valor raw se não calibrado
+- Seção "Balança" em `/config`: tarar, campo de peso conhecido e calibração em um clique
+- `DisplayManager` atualizado: mostra IP + peso em tempo real quando conectado; "Sem calibração" quando não calibrado
+- `FIOS_NAU.md`: documentação de fiação do sensor
+- `EventBus::MAX_HANDLERS` expandido para 64 com aviso no serial em caso de overflow
+- OLED migrado de SW I2C para HW I2C para compartilhar `Wire` com o NAU7802
+- `Wire.begin()` centralizado em `main.cpp`; scan I2C no boot com identificação de dispositivos
+- Rotas de `WebApp` e `OtaManager` registradas apenas uma vez (fix de re-registro a cada reconexão WiFi)
+- Novos eventos: `WeightUpdated`, `ScaleCalibrated`, `ScaleTared`
+- `*.code-workspace` adicionado ao `.gitignore`
+
+### Fixed
+- `ERR_CONNECTION_REFUSED` causado por overflow silencioso do `EventBus` (39 handlers vs MAX=32)
+- Handlers HTTP duplicados a cada reconexão WiFi travavam o WebServer
+
 ## [0.7.0] - 2026-07-01
 
 ### Added

@@ -1,8 +1,11 @@
 #include "hal/Esp32Display.h"
+#include "config.h"
+#include <Wire.h>
 
 namespace hal {
 
 void Esp32Display::begin() {
+    // Wire already initialized in main.cpp before any I2C device begins
     _u8g2.begin();
 }
 
