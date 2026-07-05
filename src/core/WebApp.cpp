@@ -30,7 +30,7 @@ p{color:var(--sub);margin:.3em 0}
 a.btn{display:inline-block;margin-top:.8em;padding:.6em 1.4em;background:var(--btn);color:#fff;border-radius:6px;text-decoration:none;font-size:.95em}
 a.btn:active{background:var(--bh)}
 </style></head><body>
-<div class="hdr"><h1>BalancaC3</h1><button class="thm" id="thm" onclick="tog()"></button></div>
+<div class="hdr"><h1>BalancaC3</h1><div style="display:flex;align-items:center;gap:.5em"><a href="/config" style="display:flex;align-items:center;gap:.3em;color:var(--text);text-decoration:none;font-size:.88em;border:1px solid var(--sub);border-radius:20px;padding:.3em .75em"><span style="font-size:1.1em">&#9881;</span>Configurações</a><button class="thm" id="thm" onclick="tog()"></button></div></div>
 <div class="card">
   <div style="font-size:.8em;color:var(--sub);margin-bottom:.4em">
     <span class="dot" id="dot"></span><span id="sensor-status">aguardando...</span>
@@ -38,7 +38,8 @@ a.btn:active{background:var(--bh)}
   <div class="weight" id="weight-val">--<span class="unit" id="weight-unit">g</span></div>
   <div class="raw" id="raw-val"></div>
   <div class="warn" id="cal-warn" style="display:none">Sensor sem calibracao — valore raw apenas. Acesse Configurações para calibrar.</div>
-  <a class="btn" href="/config">&#9881; Configurações</a>
+  <div style="margin-top:.8em"><button onclick="doTare()" style="padding:.6em 1.6em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-size:.95em;cursor:pointer">Tarar</button></div>
+  <div id="tare-msg" style="font-size:.82em;color:var(--sub);margin-top:.4em;min-height:1.2em"></div>
 </div>
 <script>
 var H=document.documentElement,D=document;
@@ -66,6 +67,11 @@ function tog(){var d=!H.classList.contains('dark');localStorage.setItem('t',d?'1
   }).catch(function(){D.getElementById('dot').className='dot off'})
   .finally(function(){setTimeout(poll,200)});
 })();
+function doTare(){
+  fetch('/scale/tare',{method:'POST'}).then(function(){
+    var m=D.getElementById('tare-msg');m.textContent='Tarado!';setTimeout(function(){m.textContent=''},2000);
+  }).catch(function(){D.getElementById('tare-msg').textContent='Erro ao tarar.'});
+}
 </script></body></html>
 )html";
 

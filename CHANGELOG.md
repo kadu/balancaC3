@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-07-04
+
+### Added
+- Botão "Tarar" na tela inicial da interface web (chama `/scale/tare`, confirma com mensagem de 2s)
+
+### Changed
+- Link de Configurações movido para o cabeçalho ao lado do botão de tema, com ícone ⚙ e borda arredondada
+- Card do peso simplificado: apenas botão Tarar centralizado
+
 ## [0.11.0] - 2026-07-04
 
 ### Added
