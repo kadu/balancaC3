@@ -1,7 +1,9 @@
 #include "core/WebApp.h"
+#include "core/ScaleManager.h"
 #include "events/EventType.h"
 #include "config.h"
 #include <Arduino.h>
+#include <cstdio>
 
 // ── index page ───────────────────────────────────────────────────────────────
 static const char ROOT_HTML[] = R"html(
@@ -10,25 +12,66 @@ static const char ROOT_HTML[] = R"html(
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>BalancaC3</title>
 <style>
-:root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#666;--btn:#0066cc;--bh:#0052a3}
-html.dark{--bg:#0f1117;--card:#1e2130;--text:#e0e6f0;--sub:#8892a4;--btn:#4d8ef0;--bh:#3a7ae0}
+:root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#666;--btn:#0066cc;--bh:#0052a3;--bdr:#ddd;--warn:#b45309;--warnbg:#fef3c7}
+html.dark{--bg:#0f1117;--card:#1e2130;--text:#e0e6f0;--sub:#8892a4;--btn:#4d8ef0;--bh:#3a7ae0;--bdr:#2e3548;--warn:#fbbf24;--warnbg:#1c1408}
 *{box-sizing:border-box}
 body{font-family:sans-serif;max-width:440px;margin:0 auto;padding:1em;background:var(--bg);color:var(--text)}
 .hdr{display:flex;justify-content:space-between;align-items:center}
 h1{margin:.4em 0;font-size:1.4em}
 .thm{background:none;border:1px solid var(--sub);border-radius:20px;padding:.3em .85em;cursor:pointer;color:var(--text);font-size:.82em}
 .card{background:var(--card);border-radius:10px;padding:1.2em;margin:.8em 0;box-shadow:0 1px 4px rgba(0,0,0,.1);text-align:center}
+.weight{font-size:3em;font-weight:bold;letter-spacing:-.02em;margin:.1em 0;line-height:1}
+.unit{font-size:.4em;font-weight:normal;color:var(--sub);margin-left:.15em}
+.raw{font-size:.8em;color:var(--sub);margin:.2em 0}
+.warn{background:var(--warnbg);color:var(--warn);border-radius:6px;padding:.5em .8em;font-size:.85em;margin:.5em 0}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:.4em}
+.dot.off{background:#ef4444}
 p{color:var(--sub);margin:.3em 0}
 a.btn{display:inline-block;margin-top:.8em;padding:.6em 1.4em;background:var(--btn);color:#fff;border-radius:6px;text-decoration:none;font-size:.95em}
 a.btn:active{background:var(--bh)}
 </style></head><body>
-<div class="hdr"><h1>BalancaC3</h1><button class="thm" id="thm" onclick="tog()"></button></div>
-<div class="card"><h2 style="margin:.2em 0">Hello World!</h2><p>Dispositivo online</p><a class="btn" href="/config">&#9881; Configurações</a></div>
+<div class="hdr"><h1>BalancaC3</h1><div style="display:flex;align-items:center;gap:.5em"><a href="/config" style="display:flex;align-items:center;gap:.3em;color:var(--text);text-decoration:none;font-size:.88em;border:1px solid var(--sub);border-radius:20px;padding:.3em .75em"><span style="font-size:1.1em">&#9881;</span>Configurações</a><button class="thm" id="thm" onclick="tog()"></button></div></div>
+<div class="card">
+  <div style="font-size:.8em;color:var(--sub);margin-bottom:.4em">
+    <span class="dot" id="dot"></span><span id="sensor-status">aguardando...</span>
+  </div>
+  <div class="weight" id="weight-val">--<span class="unit" id="weight-unit">g</span></div>
+  <div class="raw" id="raw-val"></div>
+  <div class="warn" id="cal-warn" style="display:none">Sensor sem calibracao — valore raw apenas. Acesse Configurações para calibrar.</div>
+  <div style="margin-top:.8em"><button onclick="doTare()" style="padding:.6em 1.6em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-size:.95em;cursor:pointer">Tarar</button></div>
+  <div id="tare-msg" style="font-size:.82em;color:var(--sub);margin-top:.4em;min-height:1.2em"></div>
+</div>
 <script>
-var H=document.documentElement;
-function applyDark(d){H.classList.toggle('dark',d);document.getElementById('thm').textContent=d?'Claro':'Escuro'}
+var H=document.documentElement,D=document;
+function applyDark(d){H.classList.toggle('dark',d);D.getElementById('thm').textContent=d?'Claro':'Escuro'}
 function tog(){var d=!H.classList.contains('dark');localStorage.setItem('t',d?'1':'0');applyDark(d)}
 (function(){var s=localStorage.getItem('t');applyDark(s!=null?s==='1':window.matchMedia('(prefers-color-scheme:dark)').matches)})();
+(function poll(){
+  fetch('/scale/weight').then(function(r){return r.json()}).then(function(d){
+    var dot=D.getElementById('dot'),st=D.getElementById('sensor-status');
+    var wv=D.getElementById('weight-val'),wu=D.getElementById('weight-unit');
+    var rv=D.getElementById('raw-val'),cw=D.getElementById('cal-warn');
+    if(!d.ready){dot.className='dot off';st.textContent='sensor nao detectado';wv.childNodes[0].textContent='--';rv.textContent='';return}
+    dot.className='dot';
+    if(d.calibrated){
+      st.textContent='calibrado';cw.style.display='none';
+      var g=d.grams,abs=Math.abs(g);
+      if(abs>=1000){wv.childNodes[0].textContent=(g/1000).toFixed(3);wu.textContent='kg'}
+      else{wv.childNodes[0].textContent=g.toFixed(1);wu.textContent='g'}
+      rv.textContent='raw: '+d.raw;
+    } else {
+      st.textContent='sem calibracao';cw.style.display='block';
+      wv.childNodes[0].textContent=d.raw;wu.textContent='raw';
+      rv.textContent='coloque peso para ver variacao';
+    }
+  }).catch(function(){D.getElementById('dot').className='dot off'})
+  .finally(function(){setTimeout(poll,200)});
+})();
+function doTare(){
+  fetch('/scale/tare',{method:'POST'}).then(function(){
+    var m=D.getElementById('tare-msg');m.textContent='Tarado!';setTimeout(function(){m.textContent=''},2000);
+  }).catch(function(){D.getElementById('tare-msg').textContent='Erro ao tarar.'});
+}
 </script></body></html>
 )html";
 
@@ -88,6 +131,30 @@ input:focus{border-color:var(--btn)}
   <div class="msg" id="wifi-msg"></div>
 </div>
 <div class="card">
+  <h3>Balanca</h3>
+  <p style="color:var(--sub);font-size:.85em;margin:.2em 0 .6em">Peso atual: <strong id="wval">--</strong></p>
+  <button class="btn" onclick="doTare()" style="margin-bottom:.5em">Tarar (zerar)</button>
+  <hr class="sep">
+  <p style="color:var(--sub);font-size:.85em;margin:.2em 0 .4em">Calibracao de dois passos:</p>
+  <p style="color:var(--sub);font-size:.82em;margin:0 0 .4em"><b>Passo 1:</b> plataforma vazia → Tarar acima.<br><b>Passo 2:</b> coloque o peso conhecido e clique Calibrar.</p>
+  <input id="cal-weight" type="number" min="1" max="20000" step="0.1" placeholder="Peso conhecido (g), ex: 1000" style="width:100%;padding:.55em .7em;border:1px solid var(--bdr);border-radius:6px;font-size:1em;background:var(--inp);color:var(--text);margin-bottom:.4em">
+  <button class="btn" onclick="doCalibrate()">Calibrar com esse peso</button>
+  <div class="msg" id="scale-msg"></div>
+</div>
+<div class="card">
+  <h3>LEDs</h3>
+  <div style="display:flex;align-items:center;gap:.5em;margin-bottom:.3em">
+    <label style="flex:1;margin:0">Brilho <span id="bval" style="font-weight:bold"></span></label>
+    <button id="prev-btn" title="Mostrar nos LEDs" onclick="togglePreview()"
+      style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em;opacity:.4">&#128161;</button>
+    <button title="Salvar brilho" onclick="saveBright(D.getElementById('bright').value)"
+      style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em">&#128190;</button>
+  </div>
+  <input id="bright" type="range" min="10" max="255" style="width:100%;margin:.2em 0"
+    oninput="onSlide(this.value)">
+  <div class="msg" id="led-msg"></div>
+</div>
+<div class="card">
   <h3>Dispositivo</h3>
   <a class="btn" href="/update" style="display:block;text-align:center;text-decoration:none;padding:.7em;background:var(--btn);color:#fff;border-radius:6px;margin-bottom:.4em">&#128190; Atualizar Firmware (OTA)</a>
   <button class="btn" onclick="restartDevice()">Reiniciar dispositivo</button>
@@ -129,6 +196,44 @@ Promise.all([
 }).catch(function(){D.getElementById('nets').textContent='Falha no scan.'});
 
 function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'ok':'err');m.textContent=txt;m.style.display='block'}
+fetch('/config/led').then(function(r){return r.text()}).then(function(v){
+  var s=D.getElementById('bright');s.value=v;D.getElementById('bval').textContent=v;
+}).catch(function(){});
+var previewOn=false;
+function togglePreview(){
+  previewOn=!previewOn;
+  var btn=D.getElementById('prev-btn');
+  btn.style.opacity=previewOn?'1':'0.4';
+  if(!previewOn) fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});
+  else sendPreview(D.getElementById('bright').value);
+}
+function sendPreview(v){if(previewOn) fetch('/config/led/preview',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'brightness='+v}).catch(function(){})}
+function onSlide(v){D.getElementById('bval').textContent=v;sendPreview(v);}
+// Scale
+(function pollWeight(){
+  fetch('/scale/weight').then(function(r){return r.json()}).then(function(d){
+    var w=d.calibrated?(d.grams>=1000||d.grams<=-1000?(d.grams/1000).toFixed(3)+' kg':d.grams.toFixed(1)+' g'):'Sem calibracao';
+    D.getElementById('wval').textContent=w;
+  }).catch(function(){}).finally(function(){setTimeout(pollWeight,200)});
+})();
+function doTare(){
+  fetch('/scale/tare',{method:'POST'}).then(function(){showMsg('scale-msg',true,'Tarado!')})
+  .catch(function(){showMsg('scale-msg',false,'Erro ao tarar.')});
+}
+function doCalibrate(){
+  var w=parseFloat(D.getElementById('cal-weight').value);
+  if(!w||w<=0){D.getElementById('cal-weight').focus();return}
+  fetch('/scale/calibrate',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'weight='+w})
+  .then(function(r){return r.text()}).then(function(){showMsg('scale-msg',true,'Calibrado com '+w+'g!')})
+  .catch(function(){showMsg('scale-msg',false,'Erro ao calibrar.')});
+}
+function saveBright(v){
+  fetch('/config/led',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'brightness='+v})
+  .then(function(){showMsg('led-msg',true,'Brilho salvo!');if(previewOn){previewOn=false;D.getElementById('prev-btn').style.opacity='0.4';fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});}})
+  .catch(function(){showMsg('led-msg',false,'Erro ao salvar.');});
+}
 
 function saveWifi(){
   var ssid=D.getElementById('ssid').value.trim();
@@ -189,7 +294,7 @@ void WebApp::onEvent(const events::Event& event) {
     }
 }
 
-void WebApp::startServer(const char* ip) {
+void WebApp::registerRoutes() {
     _server.on("/",               [this]() { handleRoot(); });
     _server.on("/config",         [this]() { handleConfig(); });
     _server.on("/networks",       [this]() { handleNetworks(); });
@@ -197,6 +302,20 @@ void WebApp::startServer(const char* ip) {
     _server.on("/config/restart", [this]() { handleConfigRestart(); });
     _server.on("/config/reset",   [this]() { handleConfigReset(); });
     _server.on("/config/ssid",    [this]() { handleCurrentSsid(); });
+    _server.on("/scale/weight",   [this]() { handleScaleWeight(); });
+    _server.on("/scale/tare",     [this]() { handleScaleTare(); });
+    _server.on("/scale/calibrate",[this]() { handleScaleCalibrateStep2(); });
+    _server.on("/config/led",         [this]() {
+        if (_server.arg("brightness").isEmpty()) handleConfigLedGet();
+        else handleConfigLedSet();
+    });
+    _server.on("/config/led/preview",      [this]() { handleConfigLedPreview(); });
+    _server.on("/config/led/preview/stop", [this]() { handleConfigLedPreviewStop(); });
+    _routesRegistered = true;
+}
+
+void WebApp::startServer(const char* ip) {
+    if (!_routesRegistered) registerRoutes();
     _server.begin(80);
     _running = true;
     _eventBus.publish({events::EventType::WebServerStarted, ip});
@@ -253,6 +372,78 @@ void WebApp::handleCurrentSsid() {
     char ssid[33] = {};
     _storage.getString(STORAGE_KEY_WIFI_SSID, ssid, sizeof(ssid));
     _server.send(200, "text/plain", ssid);
+}
+
+void WebApp::handleScaleWeight() {
+    float   grams      = _scale ? _scale->lastWeight()   : 0.0f;
+    int32_t raw        = _scale ? _scale->lastRaw()      : 0;
+    bool    calibrated = _scale ? _scale->isCalibrated() : false;
+    bool    ready      = _scale ? _scale->isReady()      : false;
+    char    buf[96];
+    snprintf(buf, sizeof(buf),
+             "{\"grams\":%.2f,\"raw\":%ld,\"calibrated\":%s,\"ready\":%s}",
+             grams, (long)raw,
+             calibrated ? "true" : "false",
+             ready      ? "true" : "false");
+    _server.send(200, "application/json", buf);
+}
+
+void WebApp::handleScaleTare() {
+    if (_scale) _scale->commandTare();
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleScaleCalibrateStep1() {
+    if (_scale) _scale->commandCalibrateStep1();
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleScaleCalibrateStep2() {
+    String wStr = _server.arg("weight");
+    if (wStr.isEmpty()) { _server.send(400, "text/plain", "missing weight"); return; }
+    float w = wStr.toFloat();
+    if (w <= 0.0f) { _server.send(400, "text/plain", "invalid weight"); return; }
+    if (_scale) {
+        _scale->commandCalibrateStep1(); // capture raw with weight on
+        _scale->commandCalibrateStep2(w);
+    }
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleConfigLedGet() {
+    char buf[8] = {};
+    if (!_storage.getString(STORAGE_KEY_LED_BRIGHTNESS, buf, sizeof(buf))) {
+        snprintf(buf, sizeof(buf), "%u", LED_BRIGHTNESS_DEFAULT);
+    }
+    _server.send(200, "text/plain", buf);
+}
+
+void WebApp::handleConfigLedSet() {
+    String val = _server.arg("brightness");
+    if (val.isEmpty()) { _server.send(400, "text/plain", "missing brightness"); return; }
+    int v = val.toInt();
+    if (v < 10 || v > 255) { _server.send(400, "text/plain", "out of range"); return; }
+    _storage.putString(STORAGE_KEY_LED_BRIGHTNESS, val.c_str());
+    static uint8_t bright;
+    bright = static_cast<uint8_t>(v);
+    _eventBus.publish({events::EventType::LedBrightnessChanged, &bright});
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleConfigLedPreview() {
+    String val = _server.arg("brightness");
+    if (val.isEmpty()) { _server.send(400, "text/plain", "missing brightness"); return; }
+    int v = val.toInt();
+    if (v < 10 || v > 255) { _server.send(400, "text/plain", "out of range"); return; }
+    static uint8_t bright;
+    bright = static_cast<uint8_t>(v);
+    _eventBus.publish({events::EventType::LedPreviewChanged, &bright});
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleConfigLedPreviewStop() {
+    _eventBus.publish({events::EventType::LedPreviewStopped});
+    _server.send(200, "text/plain", "OK");
 }
 
 void WebApp::handleConfigReset() {

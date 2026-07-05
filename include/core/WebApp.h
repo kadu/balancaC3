@@ -9,10 +9,15 @@
 
 namespace core {
 
+// Forward declaration to avoid circular include
+class ScaleManager;
+
 class WebApp final : public events::IEventHandler {
 public:
     WebApp(hal::IWebServer& server, hal::IWifi& wifi, hal::IStorage& storage,
            hal::IDevice& device, events::EventBus& eventBus);
+
+    void setScaleManager(ScaleManager* scale) { _scale = scale; }
 
     void begin();
     void loop();
@@ -25,12 +30,15 @@ private:
     hal::IStorage&    _storage;
     hal::IDevice&     _device;
     events::EventBus& _eventBus;
-    bool              _running        = false;
-    bool              _pendingRestart = false;
-    uint32_t          _restartAt      = 0;
+    ScaleManager*     _scale          = nullptr;
+    bool              _running          = false;
+    bool              _routesRegistered = false;
+    bool              _pendingRestart   = false;
+    uint32_t          _restartAt        = 0;
 
     void startServer(const char* ip);
     void stopServer();
+    void registerRoutes();
 
     void handleRoot();
     void handleConfig();
@@ -39,6 +47,14 @@ private:
     void handleConfigReset();
     void handleNetworks();
     void handleCurrentSsid();
+    void handleConfigLedGet();
+    void handleConfigLedSet();
+    void handleConfigLedPreview();
+    void handleConfigLedPreviewStop();
+    void handleScaleWeight();
+    void handleScaleTare();
+    void handleScaleCalibrateStep1();
+    void handleScaleCalibrateStep2();
 };
 
 } // namespace core

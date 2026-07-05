@@ -7,6 +7,160 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-04
+
+Primeira versão estável. Balança de café completa com timer, LEDs de status, display OLED, interface web, calibração, OTA e configuração WiFi por portal captive.
+
+### Incluído nesta versão
+- Pesagem em tempo real com sensor NAU7802 (célula de carga até 20kg)
+- Filtro EMA com deadband para leitura estável
+- Timer M:SS com iniciar/pausar/resetar por botões físicos
+- Display OLED com splash animado e layout timer + peso
+- 8 LEDs WS2812B com animações de status e brilho ajustável
+- Feedback imediato nos LEDs ao pressionar botões
+- Interface web com peso ao vivo, tara, calibração e configuração
+- Portal captive para configuração WiFi sem cabo
+- Atualização de firmware OTA pela interface web e por rede
+- Persistência de configurações em NVS (WiFi, brilho, calibração)
+
+## [0.16.0] - 2026-07-04
+
+### Changed
+- LED acende imediatamente ao **pressionar** o botão (via `attachPress`), apaga ao **soltar** (via `attachClick`)
+- `IButton` + `Esp32Button`: novo método `onDown()` usando `attachPress` do OneButton
+- `ButtonManager`: publica `Button1Down` / `Button2Down` ao pressionar
+- `LedManager`: flash disparado por `Button1Down`/`Button2Down`; apaga em `Button1Pressed`/`Button2Pressed`; fallback de 2s para cliques longos
+- Novos eventos: `Button1Down`, `Button2Down`
+
+## [0.15.0] - 2026-07-04
+
+### Added
+- Preview ao vivo de brilho dos LEDs na página `/config`
+- Botão 💡 ativa preview: LEDs acendem em verde com o brilho do slider
+- Mover o slider atualiza a intensidade dos LEDs em tempo real
+- Botão 💾 salva no NVS e encerra o preview automaticamente
+- Novos eventos: `LedPreviewChanged` (payload: uint8_t brilho), `LedPreviewStopped`
+- `LedManager`: estado `Preview` — verde sólido com brilho variável, retorna ao estado anterior ao parar
+- Endpoints `POST /config/led/preview` e `POST /config/led/preview/stop`
+
+## [0.14.0] - 2026-07-04
+
+### Added
+- `TimerManager`: timer com pausa/retoma (botão 1) e reset por clique longo
+- `Button1LongPressed` event publicado pelo `ButtonManager`
+- `DisplayManager`: splash de 3s ao conectar WiFi com IP deslizando da direita para o centro
+- `DisplayManager`: splash de 2.5s no modo AP com instruções de configuração
+- `IDisplay`: `drawStringAt(int16_t x, y)`, `stringWidth()`, `setFontXLarge()`, `displayWidth()`
+- `Esp32Display`: fonte XLarge (`u8g2_font_logisoso28_tf`, 28px)
+- `DisplayManager::loop()` para animação de scroll não-bloqueante
+
+### Changed
+- Layout do display em modo balança: sem traço separador, timer linha 20, peso XLarge linha 56
+- `DisplayManager` recebe `IClock` no construtor para controle de timing interno
+
+## [0.13.0] - 2026-07-04
+
+### Changed
+- Filtro EMA: alpha 0.15 → 0.08 (mais suavização)
+- Deadband: 0.3g → 1.0g
+- Snap ao zero: ±0.5g → ±2.0g, aplicado **após** o EMA (absorve ruído residual antes de decidir)
+- Display travado em 0.0g com plataforma vazia
+
+## [0.12.0] - 2026-07-04
+
+### Added
+- Botão "Tarar" na tela inicial da interface web (chama `/scale/tare`, confirma com mensagem de 2s)
+
+### Changed
+- Link de Configurações movido para o cabeçalho ao lado do botão de tema, com ícone ⚙ e borda arredondada
+- Card do peso simplificado: apenas botão Tarar centralizado
+
+## [0.11.0] - 2026-07-04
+
+### Added
+- Botão 2 executa tara (zera a balança) ao ser pressionado
+
+## [0.10.0] - 2026-07-04
+
+### Changed
+- Botão 1 pisca **verde** ao ser pressionado (era ciano)
+- Botão 2 pisca **vermelho** ao ser pressionado (era ciano)
+- `LedManager`: cor do flash parametrizada via `_flashColor` por evento
+
+## [0.9.0] - 2026-07-04
+
+### Changed
+- NAU7802: taxa de amostragem 10 SPS → 80 SPS
+- Amostras por leitura no loop: 10 → 4 (~50ms por publicação, ~20Hz)
+- Tara e calibração mantêm 10 amostras para maior precisão (`SCALE_CALIBRATION_SAMPLES`)
+- Polling web: 500ms → 200ms
+
+### Added
+- Filtro EMA (`SCALE_EMA_ALPHA=0.15`) para suavizar variações de ruído do ADC
+- Deadband (`SCALE_DEADBAND_G=0.3g`) — display só atualiza se mudança superar o limiar
+- EMA resetado ao tarar para evitar salto inicial
+
+## [0.8.0] - 2026-07-04
+
+### Added
+- HAL layer: `IScale` + `Esp32Scale` (NAU7802, 10 SPS, ganho 128×, HW I2C)
+- Core `ScaleManager`: acumulador não-bloqueante de amostras, calibração de dois passos, persistência em NVS
+- Endpoints `/scale/weight` (JSON com grams, raw, calibrated, ready), `/scale/tare`, `/scale/calibrate`
+- Tela inicial com display de peso em tempo real (polling 500ms): peso em g/kg se calibrado, valor raw se não calibrado
+- Seção "Balança" em `/config`: tarar, campo de peso conhecido e calibração em um clique
+- `DisplayManager` atualizado: mostra IP + peso em tempo real quando conectado; "Sem calibração" quando não calibrado
+- `FIOS_NAU.md`: documentação de fiação do sensor
+- `EventBus::MAX_HANDLERS` expandido para 64 com aviso no serial em caso de overflow
+- OLED migrado de SW I2C para HW I2C para compartilhar `Wire` com o NAU7802
+- `Wire.begin()` centralizado em `main.cpp`; scan I2C no boot com identificação de dispositivos
+- Rotas de `WebApp` e `OtaManager` registradas apenas uma vez (fix de re-registro a cada reconexão WiFi)
+- Novos eventos: `WeightUpdated`, `ScaleCalibrated`, `ScaleTared`
+- `*.code-workspace` adicionado ao `.gitignore`
+
+### Fixed
+- `ERR_CONNECTION_REFUSED` causado por overflow silencioso do `EventBus` (39 handlers vs MAX=32)
+- Handlers HTTP duplicados a cada reconexão WiFi travavam o WebServer
+
+## [0.7.0] - 2026-07-01
+
+### Added
+- HAL layer: `IButton` + `Esp32Button` (OneButton v2, active-low com pull-up interno)
+- Static trampolines para compatibilidade com a API `void*(void*)` do OneButton
+- Core `ButtonManager`: registra callbacks e publica `Button1Pressed` / `Button2Pressed`
+- `LedManager`: novo estado `ButtonFlash` — flash ciano (0, 220, 255) de 80ms ao pressionar, retorna ao estado anterior sem interromper OTA
+- Pinos `PIN_BUTTON_1=9`, `PIN_BUTTON_2=10` em `config.h`
+- Novos eventos: `Button1Pressed`, `Button2Pressed`
+- `mathertel/OneButton @ ^2.6.1` adicionado ao `platformio.ini`
+
+## [0.6.0] - 2026-07-01
+
+### Added
+- HAL layer: `ILedStrip` + `Esp32LedStrip` (FastLED, WS2812B GRB, GPIO 5, 8 LEDs)
+- Core `LedManager`: máquina de estados não-bloqueante com animações por evento
+  - `SystemStarted` → branco sólido 800ms
+  - `WifiConnecting` / `WifiDisconnected` → pisca verde 500ms
+  - `WifiConnected` → verde sólido 3s → fadeout suave 1.5s
+  - `WifiConfigRequired` → respiração amarela contínua (sine wave 3s)
+  - `OtaProgress` → barra de progresso azul proporcional ao %
+  - `OtaSuccess` → azul sólido 1s → apaga
+  - `OtaError` → 3 flashes vermelhos → apaga
+- Slider de brilho (10–255) na página `/config` → seção LEDs
+- Endpoints `GET /config/led` e `POST /config/led` (brightness persistido em NVS)
+- Brilho aplicado instantaneamente via evento `LedBrightnessChanged` sem reiniciar
+- `fastled/FastLED @ ^3.9.7` adicionado ao `platformio.ini`
+- Constantes `PIN_LED_STRIP=5`, `LED_COUNT=8`, `LED_BRIGHTNESS_DEFAULT=128` em `config.h`
+
+## [0.5.0] - 2026-07-01
+
+### Added
+- HAL layer: `IDisplay` + `Esp32Display` (U8g2, SSD1306 128x64 I2C — SDA=8, SCL=9)
+- Core `DisplayManager`: ouve eventos WiFi e atualiza o display
+  - `WifiConnecting` / `WifiDisconnected` → "Conectando..."
+  - `WifiConnected` → "WiFi / Conectado / `<IP>`"
+  - `WifiConfigRequired` → "Modo configuracao / BalancaC3-Config / 192.168.4.1"
+- Dependência `olikraus/U8g2 @ ^2.35.19` adicionada ao `platformio.ini`
+- Pinos I2C definidos em `config.h` (`PIN_I2C_SDA=8`, `PIN_I2C_SCL=9`, `OLED_I2C_ADDR=0x3C`)
+
 ## [0.4.0] - 2026-07-01
 
 ### Added

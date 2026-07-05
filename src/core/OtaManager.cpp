@@ -144,7 +144,10 @@ void OtaManager::startOta(const char* ip) {
         }
     );
 
-    registerHttpRoute();
+    if (!_routesRegistered) {
+        registerHttpRoute();
+        _routesRegistered = true;
+    }
     _networkActive = true;
 }
 
