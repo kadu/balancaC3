@@ -41,6 +41,8 @@ private:
     bool     _ready        = false;
     bool     _calibrated   = false;
     float    _lastWeight   = 0.0f;
+    float    _emaWeight    = 0.0f;
+    bool     _emaInitialized = false;
     int32_t  _lastRaw      = 0;
 
     // Non-blocking accumulator for averaging

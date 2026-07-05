@@ -64,7 +64,7 @@ function tog(){var d=!H.classList.contains('dark');localStorage.setItem('t',d?'1
       rv.textContent='coloque peso para ver variacao';
     }
   }).catch(function(){D.getElementById('dot').className='dot off'})
-  .finally(function(){setTimeout(poll,500)});
+  .finally(function(){setTimeout(poll,200)});
 })();
 </script></body></html>
 )html";
@@ -192,7 +192,7 @@ fetch('/config/led').then(function(r){return r.text()}).then(function(v){
   fetch('/scale/weight').then(function(r){return r.json()}).then(function(d){
     var w=d.calibrated?(d.grams>=1000||d.grams<=-1000?(d.grams/1000).toFixed(3)+' kg':d.grams.toFixed(1)+' g'):'Sem calibracao';
     D.getElementById('wval').textContent=w;
-  }).catch(function(){}).finally(function(){setTimeout(pollWeight,500)});
+  }).catch(function(){}).finally(function(){setTimeout(pollWeight,200)});
 })();
 function doTare(){
   fetch('/scale/tare',{method:'POST'}).then(function(){showMsg('scale-msg',true,'Tarado!')})

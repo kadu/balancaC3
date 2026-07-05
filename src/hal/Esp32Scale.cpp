@@ -4,7 +4,7 @@ namespace hal {
 
 bool Esp32Scale::begin() {
     if (!_nau.begin()) return false;
-    _nau.setSampleRate(NAU7802_SPS_10);    // 10 SPS — lower noise, good for coffee
+    _nau.setSampleRate(NAU7802_SPS_80);    // 80 SPS — fast enough for live coffee weighing
     _nau.setGain(NAU7802_GAIN_128);
     _nau.calibrateAFE();                   // internal offset/gain calibration
     return true;

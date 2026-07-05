@@ -4,8 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 
-// At 10 SPS each sample takes ~100ms. We collect SCALE_AVERAGE_SAMPLES
-// one per loop() tick (non-blocking) then publish the average.
+// At 80 SPS each sample takes ~12ms. We collect SCALE_AVERAGE_SAMPLES (4)
+// one per loop() tick (non-blocking) → ~50ms per published reading (20 Hz).
 
 namespace core {
 
@@ -36,13 +36,21 @@ void ScaleManager::loop() {
 
     float grams = _calibrated
         ? static_cast<float>(raw - _scale.zeroOffset()) / _scale.scaleFactor()
-        : 0.0f;
+        : static_cast<float>(raw);
 
-    if (grams > -0.5f && grams < 0.5f) grams = 0.0f;
+    // Snap near-zero to 0 only when calibrated
+    if (_calibrated && grams > -0.5f && grams < 0.5f) grams = 0.0f;
 
-    if (grams != _lastWeight || raw != _lastRaw) {
-        _lastWeight = grams;
-        publishWeight(grams);
+    // EMA filter — seed with first reading to avoid startup jump
+    if (!_emaInitialized) { _emaWeight = grams; _emaInitialized = true; }
+    _emaWeight = SCALE_EMA_ALPHA * grams + (1.0f - SCALE_EMA_ALPHA) * _emaWeight;
+
+    // Deadband — only publish if change exceeds threshold
+    float delta = _emaWeight - _lastWeight;
+    if (delta < 0) delta = -delta;
+    if (delta >= SCALE_DEADBAND_G || !_calibrated) {
+        _lastWeight = _emaWeight;
+        publishWeight(_emaWeight);
     }
 }
 
@@ -50,7 +58,10 @@ void ScaleManager::onEvent(const events::Event& /*event*/) {}
 
 void ScaleManager::commandTare() {
     if (!_ready) return;
-    _scale.tare(SCALE_AVERAGE_SAMPLES);
+    _scale.tare(SCALE_CALIBRATION_SAMPLES);
+    _emaWeight       = 0.0f;
+    _lastWeight      = 0.0f;
+    _emaInitialized  = false;
     saveCalibration();
     _eventBus.publish({events::EventType::ScaleTared});
     publishWeight(0.0f);
@@ -58,13 +69,13 @@ void ScaleManager::commandTare() {
 
 void ScaleManager::commandCalibrateStep1() {
     if (!_ready) return;
-    _rawStep1 = _scale.readRaw(SCALE_AVERAGE_SAMPLES);
+    _rawStep1 = _scale.readRaw(SCALE_CALIBRATION_SAMPLES);
 }
 
 void ScaleManager::commandCalibrateStep2(float knownGrams) {
     if (!_ready || knownGrams <= 0.0f) return;
 
-    int32_t rawKnown = _scale.readRaw(SCALE_AVERAGE_SAMPLES);
+    int32_t rawKnown = _scale.readRaw(SCALE_CALIBRATION_SAMPLES);
     int32_t rawZero  = _scale.zeroOffset();
     float   factor   = static_cast<float>(rawKnown - rawZero) / knownGrams;
 

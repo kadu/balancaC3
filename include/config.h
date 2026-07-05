@@ -33,7 +33,10 @@ static constexpr uint8_t PIN_BUTTON_2 = 10;
 
 // NAU7802 Scale
 static constexpr float   SCALE_CAPACITY_KG        = 20.0f;
-static constexpr uint8_t SCALE_AVERAGE_SAMPLES     = 10;
+static constexpr uint8_t SCALE_AVERAGE_SAMPLES     = 4;    // loop: fast display (~50ms at 80 SPS)
+static constexpr uint8_t SCALE_CALIBRATION_SAMPLES = 10;   // tare/calibrate: more stable
+static constexpr float   SCALE_EMA_ALPHA           = 0.15f; // smoothing: lower = smoother, slower
+static constexpr float   SCALE_DEADBAND_G          = 0.3f;  // min change (g) to trigger display update
 static constexpr float   SCALE_DEFAULT_KNOWN_WEIGHT_G = 1000.0f;
 
 // NVS storage keys (Scale)
