@@ -30,6 +30,8 @@ void LedManager::begin(uint8_t savedBrightness) {
     _eventBus.subscribe(events::EventType::OtaSuccess,          this);
     _eventBus.subscribe(events::EventType::OtaError,            this);
     _eventBus.subscribe(events::EventType::LedBrightnessChanged, this);
+    _eventBus.subscribe(events::EventType::LedPreviewChanged,    this);
+    _eventBus.subscribe(events::EventType::LedPreviewStopped,    this);
     _eventBus.subscribe(events::EventType::Button1Pressed,        this);
     _eventBus.subscribe(events::EventType::Button2Pressed,        this);
 }
@@ -45,6 +47,7 @@ void LedManager::loop() {
         case State::OtaSuccess:       tickOtaSuccess();       break;
         case State::OtaError:         tickOtaError();         break;
         case State::ButtonFlash:      tickButtonFlash();      break;
+        case State::Preview:                                  break;
         case State::Idle:                                     break;
     }
 }
@@ -98,6 +101,26 @@ void LedManager::onEvent(const events::Event& event) {
                 _brightness = *static_cast<const uint8_t*>(event.payload);
                 _leds.setBrightness(_brightness);
                 _leds.show();
+            }
+            break;
+
+        case events::EventType::LedPreviewChanged:
+            if (event.payload) {
+                uint8_t b = *static_cast<const uint8_t*>(event.payload);
+                _leds.setBrightness(b);
+                _leds.setAll(hal::Color::green());
+                _leds.show();
+                if (_state != State::Preview) {
+                    _prevState = _state;
+                    _state     = State::Preview;
+                }
+            }
+            break;
+
+        case events::EventType::LedPreviewStopped:
+            if (_state == State::Preview) {
+                _leds.setBrightness(_brightness);
+                transitionTo(_prevState);
             }
             break;
         default:

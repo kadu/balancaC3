@@ -49,6 +49,8 @@ private:
     void handleCurrentSsid();
     void handleConfigLedGet();
     void handleConfigLedSet();
+    void handleConfigLedPreview();
+    void handleConfigLedPreviewStop();
     void handleScaleWeight();
     void handleScaleTare();
     void handleScaleCalibrateStep1();

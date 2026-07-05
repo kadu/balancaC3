@@ -143,9 +143,15 @@ input:focus{border-color:var(--btn)}
 </div>
 <div class="card">
   <h3>LEDs</h3>
-  <label>Brilho (<span id="bval"></span>)</label>
-  <input id="bright" type="range" min="10" max="255" style="width:100%;margin:.3em 0"
-    oninput="D.getElementById('bval').textContent=this.value" onchange="saveBright(this.value)">
+  <div style="display:flex;align-items:center;gap:.5em;margin-bottom:.3em">
+    <label style="flex:1;margin:0">Brilho <span id="bval" style="font-weight:bold"></span></label>
+    <button id="prev-btn" title="Mostrar nos LEDs" onclick="togglePreview()"
+      style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em;opacity:.4">&#128161;</button>
+    <button title="Salvar brilho" onclick="saveBright(D.getElementById('bright').value)"
+      style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em">&#128190;</button>
+  </div>
+  <input id="bright" type="range" min="10" max="255" style="width:100%;margin:.2em 0"
+    oninput="onSlide(this.value)">
   <div class="msg" id="led-msg"></div>
 </div>
 <div class="card">
@@ -193,6 +199,16 @@ function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'o
 fetch('/config/led').then(function(r){return r.text()}).then(function(v){
   var s=D.getElementById('bright');s.value=v;D.getElementById('bval').textContent=v;
 }).catch(function(){});
+var previewOn=false;
+function togglePreview(){
+  previewOn=!previewOn;
+  var btn=D.getElementById('prev-btn');
+  btn.style.opacity=previewOn?'1':'0.4';
+  if(!previewOn) fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});
+  else sendPreview(D.getElementById('bright').value);
+}
+function sendPreview(v){if(previewOn) fetch('/config/led/preview',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'brightness='+v}).catch(function(){})}
+function onSlide(v){D.getElementById('bval').textContent=v;sendPreview(v);}
 // Scale
 (function pollWeight(){
   fetch('/scale/weight').then(function(r){return r.json()}).then(function(d){
@@ -215,8 +231,8 @@ function doCalibrate(){
 function saveBright(v){
   fetch('/config/led',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:'brightness='+v})
-  .then(function(){showMsg('led-msg',true,'Brilho salvo!')})
-  .catch(function(){showMsg('led-msg',false,'Erro ao salvar.')});
+  .then(function(){showMsg('led-msg',true,'Brilho salvo!');if(previewOn){previewOn=false;D.getElementById('prev-btn').style.opacity='0.4';fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});}})
+  .catch(function(){showMsg('led-msg',false,'Erro ao salvar.');});
 }
 
 function saveWifi(){
@@ -289,10 +305,12 @@ void WebApp::registerRoutes() {
     _server.on("/scale/weight",   [this]() { handleScaleWeight(); });
     _server.on("/scale/tare",     [this]() { handleScaleTare(); });
     _server.on("/scale/calibrate",[this]() { handleScaleCalibrateStep2(); });
-    _server.on("/config/led",     [this]() {
+    _server.on("/config/led",         [this]() {
         if (_server.arg("brightness").isEmpty()) handleConfigLedGet();
         else handleConfigLedSet();
     });
+    _server.on("/config/led/preview",      [this]() { handleConfigLedPreview(); });
+    _server.on("/config/led/preview/stop", [this]() { handleConfigLedPreviewStop(); });
     _routesRegistered = true;
 }
 
@@ -409,6 +427,22 @@ void WebApp::handleConfigLedSet() {
     static uint8_t bright;
     bright = static_cast<uint8_t>(v);
     _eventBus.publish({events::EventType::LedBrightnessChanged, &bright});
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleConfigLedPreview() {
+    String val = _server.arg("brightness");
+    if (val.isEmpty()) { _server.send(400, "text/plain", "missing brightness"); return; }
+    int v = val.toInt();
+    if (v < 10 || v > 255) { _server.send(400, "text/plain", "out of range"); return; }
+    static uint8_t bright;
+    bright = static_cast<uint8_t>(v);
+    _eventBus.publish({events::EventType::LedPreviewChanged, &bright});
+    _server.send(200, "text/plain", "OK");
+}
+
+void WebApp::handleConfigLedPreviewStop() {
+    _eventBus.publish({events::EventType::LedPreviewStopped});
     _server.send(200, "text/plain", "OK");
 }
 

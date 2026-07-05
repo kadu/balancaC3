@@ -31,6 +31,8 @@ enum class EventType : uint8_t {
     TimerReset,
     TimerTick,
     Button1LongPressed,
+    LedPreviewChanged,
+    LedPreviewStopped,
 };
 
 } // namespace events

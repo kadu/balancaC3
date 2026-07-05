@@ -27,6 +27,7 @@ private:
         OtaSuccess,
         OtaError,
         ButtonFlash,
+        Preview,
         Idle,
     };
 

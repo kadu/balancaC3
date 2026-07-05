@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-07-04
+
+### Added
+- Preview ao vivo de brilho dos LEDs na página `/config`
+- Botão 💡 ativa preview: LEDs acendem em verde com o brilho do slider
+- Mover o slider atualiza a intensidade dos LEDs em tempo real
+- Botão 💾 salva no NVS e encerra o preview automaticamente
+- Novos eventos: `LedPreviewChanged` (payload: uint8_t brilho), `LedPreviewStopped`
+- `LedManager`: estado `Preview` — verde sólido com brilho variável, retorna ao estado anterior ao parar
+- Endpoints `POST /config/led/preview` e `POST /config/led/preview/stop`
+
 ## [0.14.0] - 2026-07-04
 
 ### Added
