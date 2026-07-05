@@ -25,6 +25,12 @@ enum class EventType : uint8_t {
     WeightUpdated,
     ScaleCalibrated,
     ScaleTared,
+    TimerStarted,
+    TimerPaused,
+    TimerResumed,
+    TimerReset,
+    TimerTick,
+    Button1LongPressed,
 };
 
 } // namespace events

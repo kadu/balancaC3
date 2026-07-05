@@ -21,6 +21,7 @@
 #include "core/LedManager.h"
 #include "core/ButtonManager.h"
 #include "core/ScaleManager.h"
+#include "core/TimerManager.h"
 #include "config.h"
 #include <Wire.h>
 
@@ -42,10 +43,11 @@ static core::Application       app(serial, eventBus);
 static core::WifiManager       wifiManager(espWifi, storage, portal, espClock, eventBus);
 static core::WebApp            webApp(webServer, espWifi, storage, device, eventBus);
 static core::OtaManager        otaManager(ota, webServer, device, eventBus);
-static core::DisplayManager    displayManager(display, eventBus);
+static core::DisplayManager    displayManager(display, espClock, eventBus);
 static core::LedManager        ledManager(leds, espClock, eventBus);
 static core::ButtonManager     buttonManager(button1, button2, eventBus);
 static core::ScaleManager      scaleManager(scale, storage, espClock, eventBus);
+static core::TimerManager      timerManager(espClock, eventBus);
 
 static void i2cScan() {
     Serial.println("[I2C] Scanning...");
@@ -92,6 +94,7 @@ void setup() {
     scaleManager.begin();
 
     webApp.setScaleManager(&scaleManager);
+    timerManager.begin();
     wifiManager.begin();
     webApp.begin();
     otaManager.begin();
@@ -100,6 +103,8 @@ void setup() {
 void loop() {
     app.loop();
     buttonManager.loop();
+    timerManager.loop();
+    displayManager.loop();
     ledManager.loop();
     scaleManager.loop();
     wifiManager.loop();

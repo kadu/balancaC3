@@ -14,6 +14,10 @@ void ButtonManager::begin() {
         _eventBus.publish({events::EventType::Button1Pressed});
     });
 
+    _btn1.onLongPress([this]() {
+        _eventBus.publish({events::EventType::Button1LongPressed});
+    });
+
     _btn2.onPress([this]() {
         _eventBus.publish({events::EventType::Button2Pressed});
     });

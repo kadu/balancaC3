@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-07-04
+
+### Added
+- `TimerManager`: timer com pausa/retoma (botão 1) e reset por clique longo
+- `Button1LongPressed` event publicado pelo `ButtonManager`
+- `DisplayManager`: splash de 3s ao conectar WiFi com IP deslizando da direita para o centro
+- `DisplayManager`: splash de 2.5s no modo AP com instruções de configuração
+- `IDisplay`: `drawStringAt(int16_t x, y)`, `stringWidth()`, `setFontXLarge()`, `displayWidth()`
+- `Esp32Display`: fonte XLarge (`u8g2_font_logisoso28_tf`, 28px)
+- `DisplayManager::loop()` para animação de scroll não-bloqueante
+
+### Changed
+- Layout do display em modo balança: sem traço separador, timer linha 20, peso XLarge linha 56
+- `DisplayManager` recebe `IClock` no construtor para controle de timing interno
+
 ## [0.13.0] - 2026-07-04
 
 ### Changed
