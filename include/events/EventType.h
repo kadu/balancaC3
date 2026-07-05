@@ -33,6 +33,8 @@ enum class EventType : uint8_t {
     Button1LongPressed,
     LedPreviewChanged,
     LedPreviewStopped,
+    Button1Down,
+    Button2Down,
 };
 
 } // namespace events

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-07-04
+
+### Changed
+- LED acende imediatamente ao **pressionar** o botão (via `attachPress`), apaga ao **soltar** (via `attachClick`)
+- `IButton` + `Esp32Button`: novo método `onDown()` usando `attachPress` do OneButton
+- `ButtonManager`: publica `Button1Down` / `Button2Down` ao pressionar
+- `LedManager`: flash disparado por `Button1Down`/`Button2Down`; apaga em `Button1Pressed`/`Button2Pressed`; fallback de 2s para cliques longos
+- Novos eventos: `Button1Down`, `Button2Down`
+
 ## [0.15.0] - 2026-07-04
 
 ### Added
