@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-07-04
+
+### Changed
+- Filtro EMA: alpha 0.15 → 0.08 (mais suavização)
+- Deadband: 0.3g → 1.0g
+- Snap ao zero: ±0.5g → ±2.0g, aplicado **após** o EMA (absorve ruído residual antes de decidir)
+- Display travado em 0.0g com plataforma vazia
+
 ## [0.12.0] - 2026-07-04
 
 ### Added
