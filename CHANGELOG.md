@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-07-04
+
+### Changed
+- Botão 1 pisca **verde** ao ser pressionado (era ciano)
+- Botão 2 pisca **vermelho** ao ser pressionado (era ciano)
+- `LedManager`: cor do flash parametrizada via `_flashColor` por evento
+
 ## [0.9.0] - 2026-07-04
 
 ### Changed

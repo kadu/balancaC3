@@ -80,10 +80,16 @@ void LedManager::onEvent(const events::Event& event) {
             transitionTo(State::OtaError);
             break;
         case events::EventType::Button1Pressed:
-        case events::EventType::Button2Pressed:
-            // Only flash if not in a critical animation
             if (_state != State::OtaProgress && _state != State::OtaError) {
-                _prevState = _state;
+                _prevState  = _state;
+                _flashColor = hal::Color::green();
+                transitionTo(State::ButtonFlash);
+            }
+            break;
+        case events::EventType::Button2Pressed:
+            if (_state != State::OtaProgress && _state != State::OtaError) {
+                _prevState  = _state;
+                _flashColor = hal::Color::red();
                 transitionTo(State::ButtonFlash);
             }
             break;
@@ -109,7 +115,7 @@ void LedManager::transitionTo(State next) {
     switch (_state) {
         case State::ButtonFlash:
             _leds.setBrightness(_brightness);
-            _leds.setAll({0, 220, 255}); // cyan
+            _leds.setAll(_flashColor);
             _leds.show();
             break;
         case State::Boot:

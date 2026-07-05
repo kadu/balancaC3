@@ -55,7 +55,8 @@ private:
 
     uint32_t elapsed() const;
 
-    State    _prevState    = State::Idle;
+    State      _prevState    = State::Idle;
+    hal::Color _flashColor  = hal::Color::white();
 };
 
 } // namespace core
