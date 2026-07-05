@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-04
+
+### Changed
+- NAU7802: taxa de amostragem 10 SPS → 80 SPS
+- Amostras por leitura no loop: 10 → 4 (~50ms por publicação, ~20Hz)
+- Tara e calibração mantêm 10 amostras para maior precisão (`SCALE_CALIBRATION_SAMPLES`)
+- Polling web: 500ms → 200ms
+
+### Added
+- Filtro EMA (`SCALE_EMA_ALPHA=0.15`) para suavizar variações de ruído do ADC
+- Deadband (`SCALE_DEADBAND_G=0.3g`) — display só atualiza se mudança superar o limiar
+- EMA resetado ao tarar para evitar salto inicial
+
 ## [0.8.0] - 2026-07-04
 
 ### Added
