@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-07-04
+
+Primeira versão estável. Balança de café completa com timer, LEDs de status, display OLED, interface web, calibração, OTA e configuração WiFi por portal captive.
+
+### Incluído nesta versão
+- Pesagem em tempo real com sensor NAU7802 (célula de carga até 20kg)
+- Filtro EMA com deadband para leitura estável
+- Timer M:SS com iniciar/pausar/resetar por botões físicos
+- Display OLED com splash animado e layout timer + peso
+- 8 LEDs WS2812B com animações de status e brilho ajustável
+- Feedback imediato nos LEDs ao pressionar botões
+- Interface web com peso ao vivo, tara, calibração e configuração
+- Portal captive para configuração WiFi sem cabo
+- Atualização de firmware OTA pela interface web e por rede
+- Persistência de configurações em NVS (WiFi, brilho, calibração)
+
 ## [0.16.0] - 2026-07-04
 
 ### Changed
