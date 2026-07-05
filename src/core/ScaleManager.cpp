@@ -39,19 +39,21 @@ void ScaleManager::loop() {
         ? static_cast<float>(raw - _scale.zeroOffset()) / _scale.scaleFactor()
         : static_cast<float>(raw);
 
-    // Snap near-zero to 0 only when calibrated
-    if (_calibrated && grams > -0.5f && grams < 0.5f) grams = 0.0f;
-
-    // EMA filter — seed with first reading to avoid startup jump
+    // EMA applied to raw grams — seed on first reading to avoid startup jump
     if (!_emaInitialized) { _emaWeight = grams; _emaInitialized = true; }
     _emaWeight = SCALE_EMA_ALPHA * grams + (1.0f - SCALE_EMA_ALPHA) * _emaWeight;
 
-    // Deadband — only publish if change exceeds threshold
-    float delta = _emaWeight - _lastWeight;
-    if (delta < 0) delta = -delta;
+    // Snap to zero AFTER EMA so noise near zero is fully absorbed
+    float displayed = _emaWeight;
+    if (_calibrated && displayed > -SCALE_ZERO_SNAP_G && displayed < SCALE_ZERO_SNAP_G)
+        displayed = 0.0f;
+
+    // Deadband — only publish if displayed value changed enough
+    float delta = displayed - _lastWeight;
+    if (delta < 0.0f) delta = -delta;
     if (delta >= SCALE_DEADBAND_G || !_calibrated) {
-        _lastWeight = _emaWeight;
-        publishWeight(_emaWeight);
+        _lastWeight = displayed;
+        publishWeight(displayed);
     }
 }
 
