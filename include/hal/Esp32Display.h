@@ -12,12 +12,16 @@ public:
     void clear() override;
     void show() override;
 
-    void drawString(uint8_t x, uint8_t y, const char* text) override;
-    void drawStringCenter(uint8_t y, const char* text) override;
-    void setFontSmall() override;
-    void setFontMedium() override;
-    void setFontLarge() override;
-    void drawHLine(uint8_t x, uint8_t y, uint8_t width) override;
+    void    drawString(uint8_t x, uint8_t y, const char* text) override;
+    void    drawStringAt(int16_t x, uint8_t y, const char* text) override;
+    void    drawStringCenter(uint8_t y, const char* text) override;
+    uint8_t stringWidth(const char* text) override;
+    void    setFontSmall() override;
+    void    setFontMedium() override;
+    void    setFontLarge() override;
+    void    setFontXLarge() override;
+    void    drawHLine(uint8_t x, uint8_t y, uint8_t width) override;
+    uint8_t displayWidth() override;
 
 private:
     // SSD1306 128x64 — hardware I2C, shares Wire bus with NAU7802

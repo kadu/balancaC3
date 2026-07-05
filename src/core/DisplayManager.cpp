@@ -1,13 +1,14 @@
 #include "core/DisplayManager.h"
 #include "core/ScaleManager.h"
+#include "core/TimerManager.h"
 #include "events/EventType.h"
 #include <cstdio>
 #include <cstring>
 
 namespace core {
 
-DisplayManager::DisplayManager(hal::IDisplay& display, events::EventBus& eventBus)
-    : _display(display), _eventBus(eventBus) {}
+DisplayManager::DisplayManager(hal::IDisplay& display, hal::IClock& clock, events::EventBus& eventBus)
+    : _display(display), _clock(clock), _eventBus(eventBus) {}
 
 void DisplayManager::begin() {
     _display.begin();
@@ -19,97 +20,165 @@ void DisplayManager::begin() {
     _eventBus.subscribe(events::EventType::WeightUpdated,      this);
     _eventBus.subscribe(events::EventType::ScaleTared,         this);
     _eventBus.subscribe(events::EventType::ScaleCalibrated,    this);
+    _eventBus.subscribe(events::EventType::TimerTick,          this);
+    _eventBus.subscribe(events::EventType::TimerReset,         this);
 
-    showConnecting();
+    transitionTo(State::Connecting);
+}
+
+void DisplayManager::loop() {
+    uint32_t now = _clock.millis();
+
+    if (_state == State::SplashConnected) {
+        // Advance scroll
+        if (now - _lastScrollMs >= SCROLL_INTERVAL_MS) {
+            _lastScrollMs = now;
+            if (_scrollX > _scrollTarget) {
+                _scrollX -= 2;
+                if (_scrollX < _scrollTarget) _scrollX = _scrollTarget;
+            }
+            drawSplashConnected();
+        }
+        // Transition after timeout
+        if (now - _splashStartMs >= SPLASH_CONNECTED_MS) transitionTo(State::Scale);
+        return;
+    }
+
+    if (_state == State::SplashAp) {
+        if (now - _splashStartMs >= SPLASH_AP_MS) transitionTo(State::Scale);
+        return;
+    }
 }
 
 void DisplayManager::onEvent(const events::Event& event) {
     switch (event.type) {
         case events::EventType::WifiConnecting:
-            _connected = false;
-            showConnecting();
+            transitionTo(State::Connecting);
             break;
         case events::EventType::WifiConnected:
-            _connected = true;
             if (event.payload) strncpy(_ip, static_cast<const char*>(event.payload), sizeof(_ip) - 1);
-            showConnected();
+            transitionTo(State::SplashConnected);
             break;
         case events::EventType::WifiDisconnected:
-            _connected = false;
-            showConnecting();
+            transitionTo(State::Connecting);
             break;
         case events::EventType::WifiConfigRequired:
-            _connected = false;
-            showApMode();
+            transitionTo(State::SplashAp);
             break;
         case events::EventType::WeightUpdated: {
             auto* p = static_cast<const WeightPayload*>(event.payload);
             if (p) { _lastWeight = p->grams; _calibrated = p->calibrated; }
-            showWeight(_lastWeight, _calibrated);
+            if (_state == State::Scale) drawScale();
             break;
         }
         case events::EventType::ScaleTared:
-            showWeight(0.0f, _calibrated);
+            _lastWeight = 0.0f;
+            if (_state == State::Scale) drawScale();
             break;
         case events::EventType::ScaleCalibrated:
             _calibrated = true;
-            showWeight(_lastWeight, true);
+            if (_state == State::Scale) drawScale();
             break;
+        case events::EventType::TimerTick:
+        case events::EventType::TimerReset: {
+            auto* p = static_cast<const TimerPayload*>(event.payload);
+            if (p) { _timerMin = p->minutes; _timerSec = p->seconds; }
+            if (_state == State::Scale) drawScale();
+            break;
+        }
         default:
             break;
     }
 }
 
-void DisplayManager::showConnected() {
-    _display.clear();
-    _display.setFontSmall();
-    _display.drawStringCenter(10, _ip);
-    _display.drawHLine(0, 14, 128);
-    showWeight(_lastWeight, _calibrated);
-}
+void DisplayManager::transitionTo(State next) {
+    _state = next;
 
-void DisplayManager::showWeight(float grams, bool calibrated) {
-    if (!_connected) return;
-
-    _display.clear();
-    _display.setFontSmall();
-    _display.drawStringCenter(10, _ip);
-    _display.drawHLine(0, 14, 128);
-
-    if (!calibrated) {
-        _display.setFontSmall();
-        _display.drawStringCenter(35, "Sem calibracao");
-        _display.drawStringCenter(50, "Acesse /config");
-    } else {
-        // Format: "1234.5 g" or "1.234 kg" above 1000g
-        char buf[16];
-        if (grams >= 1000.0f || grams <= -1000.0f) {
-            snprintf(buf, sizeof(buf), "%.3f kg", grams / 1000.0f);
-        } else {
-            snprintf(buf, sizeof(buf), "%.1f g", grams);
+    switch (_state) {
+        case State::Connecting:
+            drawConnecting();
+            break;
+        case State::SplashConnected: {
+            _splashStartMs = _clock.millis();
+            _lastScrollMs  = _splashStartMs;
+            // Start text off-screen to the right
+            _display.setFontLarge();
+            uint8_t w = _display.stringWidth(_ip);
+            _scrollX      = static_cast<int16_t>(_display.displayWidth());
+            _scrollTarget = static_cast<int16_t>((_display.displayWidth() - w) / 2);
+            drawSplashConnected();
+            break;
         }
-        _display.setFontLarge();
-        _display.drawStringCenter(48, buf);
-        _display.setFontSmall();
-        _display.drawStringCenter(62, "balanca de cafe");
+        case State::SplashAp:
+            _splashStartMs = _clock.millis();
+            drawSplashAp();
+            break;
+        case State::Scale:
+            drawScale();
+            break;
     }
+}
+
+// ── Scale screen ─────────────────────────────────────────────────────────────
+//
+//  line 28  │     2:05          (XLarge ~28px)
+//  line 40  ├──────────────────
+//  line 62  │   250.3 g        (XLarge ~28px)
+//
+void DisplayManager::drawScale() {
+    _display.clear();
+
+    // Timer
+    char timeBuf[8];
+    snprintf(timeBuf, sizeof(timeBuf), "%u:%02u", _timerMin, _timerSec);
+    _display.setFontLarge();
+    _display.drawStringCenter(20, timeBuf);
+
+    // Weight
+    if (!_calibrated) {
+        _display.setFontSmall();
+        _display.drawStringCenter(44, "Sem calibracao");
+        _display.drawStringCenter(56, "Acesse /config");
+    } else {
+        char wBuf[12];
+        if (_lastWeight >= 1000.0f || _lastWeight <= -1000.0f)
+            snprintf(wBuf, sizeof(wBuf), "%.2fkg", _lastWeight / 1000.0f);
+        else
+            snprintf(wBuf, sizeof(wBuf), "%.1fg", _lastWeight);
+        _display.setFontXLarge();
+        _display.drawStringCenter(56, wBuf);
+    }
+
     _display.show();
 }
 
-void DisplayManager::showApMode() {
+// ── Splash: IP scroll ────────────────────────────────────────────────────────
+void DisplayManager::drawSplashConnected() {
     _display.clear();
     _display.setFontSmall();
-    _display.drawStringCenter(12, "Modo configuracao");
+    _display.drawStringCenter(12, "Conectado!");
     _display.drawHLine(0, 16, 128);
-    _display.drawStringCenter(30, "Conecte no WiFi:");
-    _display.setFontSmall();
-    _display.drawStringCenter(44, "BalancaC3-Config");
-    _display.drawHLine(0, 50, 128);
-    _display.drawStringCenter(62, "192.168.4.1");
+    _display.setFontLarge();
+    _display.drawStringAt(_scrollX, 44, _ip);
     _display.show();
 }
 
-void DisplayManager::showConnecting() {
+// ── Splash: AP mode ──────────────────────────────────────────────────────────
+void DisplayManager::drawSplashAp() {
+    _display.clear();
+    _display.setFontSmall();
+    _display.drawStringCenter(14, "Modo configuracao");
+    _display.drawHLine(0, 18, 128);
+    _display.drawStringCenter(34, "Conecte-se na rede:");
+    _display.setFontSmall();
+    _display.drawStringCenter(48, "BalancaC3-Config");
+    _display.drawHLine(0, 54, 128);
+    _display.drawStringCenter(64, "192.168.4.1");
+    _display.show();
+}
+
+// ── Connecting ───────────────────────────────────────────────────────────────
+void DisplayManager::drawConnecting() {
     _display.clear();
     _display.setFontMedium();
     _display.drawStringCenter(30, "WiFi");
