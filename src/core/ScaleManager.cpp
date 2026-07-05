@@ -17,6 +17,7 @@ void ScaleManager::begin() {
     _ready = _scale.begin();
     if (!_ready) return;
     loadCalibration();
+    _eventBus.subscribe(events::EventType::Button2Pressed, this);
 }
 
 void ScaleManager::loop() {
@@ -54,7 +55,9 @@ void ScaleManager::loop() {
     }
 }
 
-void ScaleManager::onEvent(const events::Event& /*event*/) {}
+void ScaleManager::onEvent(const events::Event& event) {
+    if (event.type == events::EventType::Button2Pressed) commandTare();
+}
 
 void ScaleManager::commandTare() {
     if (!_ready) return;
