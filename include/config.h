@@ -7,8 +7,8 @@ static constexpr uint32_t SERIAL_BAUD_RATE = 115200;
 static constexpr uint8_t PIN_LED_BUILTIN = 8;
 
 // OLED I2C (SSD1306 128x64)
-static constexpr uint8_t PIN_I2C_SDA    = 8;
-static constexpr uint8_t PIN_I2C_SCL    = 9;
+static constexpr uint8_t PIN_I2C_SDA    = 6;
+static constexpr uint8_t PIN_I2C_SCL    = 7;
 static constexpr uint8_t OLED_I2C_ADDR  = 0x3C;
 
 // WiFi
@@ -30,3 +30,12 @@ static constexpr char STORAGE_KEY_LED_BRIGHTNESS[] = "led_bright";
 // Buttons
 static constexpr uint8_t PIN_BUTTON_1 = 9;
 static constexpr uint8_t PIN_BUTTON_2 = 10;
+
+// NAU7802 Scale
+static constexpr float   SCALE_CAPACITY_KG        = 20.0f;
+static constexpr uint8_t SCALE_AVERAGE_SAMPLES     = 10;
+static constexpr float   SCALE_DEFAULT_KNOWN_WEIGHT_G = 1000.0f;
+
+// NVS storage keys (Scale)
+static constexpr char STORAGE_KEY_SCALE_ZERO[]   = "scale_zero";
+static constexpr char STORAGE_KEY_SCALE_FACTOR[] = "scale_factor";

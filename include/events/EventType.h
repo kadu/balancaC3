@@ -22,6 +22,9 @@ enum class EventType : uint8_t {
     LedBrightnessChanged,
     Button1Pressed,
     Button2Pressed,
+    WeightUpdated,
+    ScaleCalibrated,
+    ScaleTared,
 };
 
 } // namespace events

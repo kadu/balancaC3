@@ -1,0 +1,6 @@
+Os fios do NAU estão
+
++3V3 - AZUL
+GND  - AMARELO
+SCL  - PRETO
+SDA  - VERMELHO

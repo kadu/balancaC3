@@ -17,7 +17,13 @@ private:
     hal::IDisplay&    _display;
     events::EventBus& _eventBus;
 
-    void showConnected(const char* ip);
+    bool  _connected   = false;
+    float _lastWeight  = 0.0f;
+    bool  _calibrated  = false;
+    char  _ip[16]      = {};
+
+    void showConnected();
+    void showWeight(float grams, bool calibrated);
     void showApMode();
     void showConnecting();
 };

@@ -24,8 +24,9 @@ private:
     hal::IDevice&     _device;
     events::EventBus& _eventBus;
 
-    bool     _networkActive   = false;
-    bool     _pendingRestart  = false;
+    bool     _networkActive    = false;
+    bool     _routesRegistered = false;
+    bool     _pendingRestart   = false;
     uint32_t _restartAt       = 0;
     uint32_t _lastProgressPct = 0;
 
