@@ -3,6 +3,10 @@
 namespace hal {
 
 // Static trampolines — OneButton only accepts plain function pointers
+static void trampolineDown(void* self) {
+    auto* b = static_cast<Esp32Button*>(self);
+    if (b->_downCallback) b->_downCallback();
+}
 static void trampolinePress(void* self) {
     auto* b = static_cast<Esp32Button*>(self);
     if (b->_pressCallback) b->_pressCallback();
@@ -23,6 +27,11 @@ void Esp32Button::begin() {}
 
 void Esp32Button::tick() {
     _btn.tick();
+}
+
+void Esp32Button::onDown(ButtonCallback cb) {
+    _downCallback = cb;
+    _btn.attachPress(trampolineDown, this);
 }
 
 void Esp32Button::onPress(ButtonCallback cb) {

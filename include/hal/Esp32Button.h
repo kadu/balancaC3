@@ -12,11 +12,13 @@ public:
     void begin() override;
     void tick() override;
 
+    void onDown(ButtonCallback cb) override;
     void onPress(ButtonCallback cb) override;
     void onLongPress(ButtonCallback cb) override;
     void onDoubleClick(ButtonCallback cb) override;
 
     // Public to allow static trampolines in .cpp to access callbacks
+    ButtonCallback _downCallback;
     ButtonCallback _pressCallback;
     ButtonCallback _longPressCallback;
     ButtonCallback _doubleClickCallback;

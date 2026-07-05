@@ -32,6 +32,8 @@ void LedManager::begin(uint8_t savedBrightness) {
     _eventBus.subscribe(events::EventType::LedBrightnessChanged, this);
     _eventBus.subscribe(events::EventType::LedPreviewChanged,    this);
     _eventBus.subscribe(events::EventType::LedPreviewStopped,    this);
+    _eventBus.subscribe(events::EventType::Button1Down,           this);
+    _eventBus.subscribe(events::EventType::Button2Down,           this);
     _eventBus.subscribe(events::EventType::Button1Pressed,        this);
     _eventBus.subscribe(events::EventType::Button2Pressed,        this);
 }
@@ -82,19 +84,24 @@ void LedManager::onEvent(const events::Event& event) {
         case events::EventType::OtaError:
             transitionTo(State::OtaError);
             break;
-        case events::EventType::Button1Pressed:
+        case events::EventType::Button1Down:
             if (_state != State::OtaProgress && _state != State::OtaError) {
                 _prevState  = _state;
                 _flashColor = hal::Color::green();
                 transitionTo(State::ButtonFlash);
             }
             break;
-        case events::EventType::Button2Pressed:
+        case events::EventType::Button2Down:
             if (_state != State::OtaProgress && _state != State::OtaError) {
                 _prevState  = _state;
                 _flashColor = hal::Color::red();
                 transitionTo(State::ButtonFlash);
             }
+            break;
+        case events::EventType::Button1Pressed:
+        case events::EventType::Button2Pressed:
+            // Action already handled by other managers; extinguish flash
+            if (_state == State::ButtonFlash) transitionTo(_prevState);
             break;
         case events::EventType::LedBrightnessChanged:
             if (event.payload) {
@@ -256,9 +263,9 @@ void LedManager::tickOtaError() {
     if (elapsed() >= OTA_ERROR_MS) transitionTo(State::Idle);
 }
 
-// ── Button flash — 80ms cyan then back ──────────────────────────────────────
+// ── Button flash — on while pressed, timeout of 2s as safety fallback ───────
 void LedManager::tickButtonFlash() {
-    if (elapsed() >= 80) transitionTo(_prevState);
+    if (elapsed() >= 2000) transitionTo(_prevState);
 }
 
 } // namespace core
