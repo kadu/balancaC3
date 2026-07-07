@@ -54,6 +54,12 @@ void Esp32Display::drawHLine(uint8_t x, uint8_t y, uint8_t width) {
     _u8g2.drawHLine(x, y, width);
 }
 
+void Esp32Display::drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) {
+    // U8g2 expects XBM format (LSB first); the image is already MSB (standard bitmap).
+    // Use drawXBMP for standard byte order bitmaps.
+    _u8g2.drawXBMP(x, y, w, h, bitmap);
+}
+
 uint8_t Esp32Display::displayWidth() {
     return 128;
 }

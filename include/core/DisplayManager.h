@@ -17,6 +17,7 @@ public:
 
 private:
     enum class State : uint8_t {
+        SplashLogo,
         Connecting,
         SplashConnected,
         SplashAp,
@@ -39,6 +40,7 @@ private:
     uint16_t _timerMin    = 0;
     uint8_t  _timerSec    = 0;
 
+    static constexpr uint32_t SPLASH_LOGO_MS      = 3000;
     static constexpr uint32_t SPLASH_CONNECTED_MS = 3000;
     static constexpr uint32_t SPLASH_AP_MS        = 2500;
     static constexpr uint32_t SCROLL_INTERVAL_MS  = 20;
@@ -46,6 +48,7 @@ private:
     void transitionTo(State next);
     void drawScale();
     void drawConnecting();
+    void drawSplashLogo();
     void drawSplashConnected();
     void drawSplashAp();
 };

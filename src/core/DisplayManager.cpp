@@ -2,6 +2,7 @@
 #include "core/ScaleManager.h"
 #include "core/TimerManager.h"
 #include "events/EventType.h"
+#include "logo.h"
 #include <cstdio>
 #include <cstring>
 
@@ -23,11 +24,20 @@ void DisplayManager::begin() {
     _eventBus.subscribe(events::EventType::TimerTick,          this);
     _eventBus.subscribe(events::EventType::TimerReset,         this);
 
-    transitionTo(State::Connecting);
+    transitionTo(State::SplashLogo);
 }
 
 void DisplayManager::loop() {
     uint32_t now = _clock.millis();
+
+    if (_state == State::SplashLogo) {
+        if (now - _splashStartMs >= SPLASH_LOGO_MS) {
+            // If IP already received during logo, go straight to connected splash
+            if (_ip[0] != '\0') transitionTo(State::SplashConnected);
+            else                transitionTo(State::Connecting);
+        }
+        return;
+    }
 
     if (_state == State::SplashConnected) {
         // Advance scroll
@@ -51,6 +61,13 @@ void DisplayManager::loop() {
 }
 
 void DisplayManager::onEvent(const events::Event& event) {
+    // Hold logo splash — buffer WiFi events until logo finishes
+    if (_state == State::SplashLogo) {
+        if (event.type == events::EventType::WifiConnected && event.payload)
+            strncpy(_ip, static_cast<const char*>(event.payload), sizeof(_ip) - 1);
+        return;
+    }
+
     switch (event.type) {
         case events::EventType::WifiConnecting:
             transitionTo(State::Connecting);
@@ -95,6 +112,10 @@ void DisplayManager::transitionTo(State next) {
     _state = next;
 
     switch (_state) {
+        case State::SplashLogo:
+            _splashStartMs = _clock.millis();
+            drawSplashLogo();
+            break;
         case State::Connecting:
             drawConnecting();
             break;
@@ -174,6 +195,13 @@ void DisplayManager::drawSplashAp() {
     _display.drawStringCenter(48, "BalancaC3-Config");
     _display.drawHLine(0, 54, 128);
     _display.drawStringCenter(64, "192.168.4.1");
+    _display.show();
+}
+
+// ── Logo splash ──────────────────────────────────────────────────────────────
+void DisplayManager::drawSplashLogo() {
+    _display.clear();
+    _display.drawBitmap(0, 0, LOGO_WIDTH, LOGO_HEIGHT, logo_bitmap);
     _display.show();
 }
 

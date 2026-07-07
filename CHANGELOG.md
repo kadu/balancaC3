@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-07-04
+
+### Added
+- Tela de logo no boot: exibe bitmap 128×64 por 3 segundos antes de iniciar o WiFi
+- `logo.h`: bitmap do logo em PROGMEM
+- `IDisplay::drawBitmap()` + `Esp32Display::drawBitmap()` usando `drawXBMP` do U8g2
+- `DisplayManager`: estado `SplashLogo` bloqueia eventos WiFi durante exibição; ao terminar vai direto para splash de IP se já conectou
+
 ## [1.1.0] - 2026-07-04
 
 ### Added

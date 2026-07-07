@@ -21,6 +21,7 @@ public:
     void    setFontLarge() override;
     void    setFontXLarge() override;
     void    drawHLine(uint8_t x, uint8_t y, uint8_t width) override;
+    void    drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) override;
     uint8_t displayWidth() override;
 
 private:
