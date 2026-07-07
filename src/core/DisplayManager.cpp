@@ -32,6 +32,8 @@ void DisplayManager::loop() {
 
     if (_state == State::SplashLogo) {
         if (now - _splashStartMs >= SPLASH_LOGO_MS) {
+            // Sync calibration state from ScaleManager before first draw
+            if (_scale) _calibrated = _scale->isCalibrated();
             // If IP already received during logo, go straight to connected splash
             if (_ip[0] != '\0') transitionTo(State::SplashConnected);
             else                transitionTo(State::Connecting);

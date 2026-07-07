@@ -7,9 +7,13 @@
 
 namespace core {
 
+class ScaleManager;
+
 class DisplayManager final : public events::IEventHandler {
 public:
     DisplayManager(hal::IDisplay& display, hal::IClock& clock, events::EventBus& eventBus);
+
+    void setScaleManager(ScaleManager* scale) { _scale = scale; }
 
     void begin();
     void loop();
@@ -27,6 +31,7 @@ private:
     hal::IDisplay&    _display;
     hal::IClock&      _clock;
     events::EventBus& _eventBus;
+    ScaleManager*     _scale = nullptr;
 
     State    _state       = State::Connecting;
     uint32_t _splashStartMs = 0;

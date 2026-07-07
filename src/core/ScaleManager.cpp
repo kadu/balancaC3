@@ -17,6 +17,7 @@ void ScaleManager::begin() {
     _ready = _scale.begin();
     if (!_ready) return;
     loadCalibration();
+    if (_calibrated) _eventBus.publish({events::EventType::ScaleCalibrated});
     _eventBus.subscribe(events::EventType::Button2Pressed, this);
 }
 
