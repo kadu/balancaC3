@@ -143,6 +143,27 @@ p.hint{color:var(--sub);font-size:.83em;margin:.2em 0 .5em}
     <button class="btn" onclick="doCalibrate()">Calibrar com esse peso</button>
     <div class="msg" id="scale-msg"></div>
   </div>
+  <div class="card">
+    <p style="font-size:.78em;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:0 0 .8em;font-weight:600">Filtro de leitura</p>
+    <label>Suavização <span id="ema-val" style="font-weight:bold"></span>
+      <span style="font-size:.78em;color:var(--sub)"> — menor = mais estável, maior = reage mais rápido</span>
+    </label>
+    <input id="ema" type="range" min="1" max="50" style="width:100%;margin:.2em 0" oninput="updFilter('ema-val',this.value+'%')">
+    <label>Sensibilidade <span id="dead-val" style="font-weight:bold"></span>
+      <span style="font-size:.78em;color:var(--sub)"> — variação mínima em gramas para atualizar o display</span>
+    </label>
+    <input id="dead" type="range" min="1" max="50" style="width:100%;margin:.2em 0" oninput="updFilter('dead-val',this.value/10+'g')">
+    <label>Zona morta no zero <span id="snap-val" style="font-weight:bold"></span>
+      <span style="font-size:.78em;color:var(--sub)"> — trava em 0g quando vazio até esse valor</span>
+    </label>
+    <input id="snap" type="range" min="1" max="100" style="width:100%;margin:.2em 0" oninput="updFilter('snap-val',this.value/10+'g')">
+    <label>Velocidade de leitura <span id="samp-val" style="font-weight:bold"></span>
+      <span style="font-size:.78em;color:var(--sub)"> — amostras acumuladas antes de atualizar (menos = mais rápido)</span>
+    </label>
+    <input id="samp" type="range" min="1" max="20" style="width:100%;margin:.2em 0" oninput="updFilter('samp-val',this.value)">
+    <button class="btn" onclick="saveFilter()" style="margin-top:.7em">Salvar configurações do filtro</button>
+    <div class="msg" id="filter-msg"></div>
+  </div>
 </div>
 
 <!-- LEDs -->
@@ -274,8 +295,27 @@ var wifiLoaded=false;
     D.getElementById('wval').textContent=w;
   }).catch(function(){}).finally(function(){setTimeout(pollWeight,200)});
 })();
-function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'ok':'err');m.textContent=txt;m.style.display='block'}
+function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'ok':'err');m.textContent=txt;m.style.display='block';if(ok)setTimeout(function(){m.style.display='none'},3000)}
 function doTare(){fetch('/scale/tare',{method:'POST'}).then(function(){showMsg('scale-msg',true,'Tarado!')}).catch(function(){showMsg('scale-msg',false,'Erro ao tarar.')})}
+function updFilter(id,v){D.getElementById(id).textContent=v}
+function saveFilter(){
+  var ema=D.getElementById('ema').value/100;
+  var dead=D.getElementById('dead').value/10;
+  var snap=D.getElementById('snap').value/10;
+  var samp=D.getElementById('samp').value;
+  fetch('/scale/filter',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:'ema='+ema+'\x26deadband='+dead+'\x26snap='+snap+'\x26samples='+samp})
+  .then(function(){showMsg('filter-msg',true,'Filtro salvo!')})
+  .catch(function(){showMsg('filter-msg',false,'Erro ao salvar.')});
+}
+// Load filter config
+fetch('/scale/filter').then(function(r){return r.json()}).then(function(f){
+  var e=Math.round(f.ema*100);var d=Math.round(f.deadband*10);var s=Math.round(f.snap*10);var sp=f.samples;
+  D.getElementById('ema').value=e;updFilter('ema-val',e+'%');
+  D.getElementById('dead').value=d;updFilter('dead-val',d/10+'g');
+  D.getElementById('snap').value=s;updFilter('snap-val',s/10+'g');
+  D.getElementById('samp').value=sp;updFilter('samp-val',sp);
+}).catch(function(){});
 function doCalibrate(){
   var w=parseFloat(D.getElementById('cal-weight').value);
   if(!w||w<=0){D.getElementById('cal-weight').focus();return}
@@ -385,6 +425,12 @@ void WebApp::registerRoutes() {
     _server.on("/scale/weight",   [this]() { handleScaleWeight(); });
     _server.on("/scale/tare",     [this]() { handleScaleTare(); });
     _server.on("/scale/calibrate",[this]() { handleScaleCalibrateStep2(); });
+    _server.on("/scale/filter",   [this]() {
+        if (_server.arg("ema").isEmpty() && _server.arg("deadband").isEmpty())
+            handleScaleFilterGet();
+        else
+            handleScaleFilterSet();
+    });
     _server.on("/config/led",         [this]() {
         if (_server.arg("brightness").isEmpty()) handleConfigLedGet();
         else handleConfigLedSet();
@@ -452,6 +498,28 @@ void WebApp::handleCurrentSsid() {
     char ssid[33] = {};
     _storage.getString(STORAGE_KEY_WIFI_SSID, ssid, sizeof(ssid));
     _server.send(200, "text/plain", ssid);
+}
+
+void WebApp::handleScaleFilterGet() {
+    if (!_scale) { _server.send(200, "application/json", "{}"); return; }
+    auto cfg = _scale->filterConfig();
+    char buf[128];
+    snprintf(buf, sizeof(buf),
+        "{\"ema\":%.3f,\"deadband\":%.2f,\"snap\":%.2f,\"samples\":%u}",
+        cfg.emaAlpha, cfg.deadbandG, cfg.zeroSnapG, cfg.samples);
+    _server.send(200, "application/json", buf);
+}
+
+void WebApp::handleScaleFilterSet() {
+    if (!_scale) { _server.send(400, "text/plain", "no scale"); return; }
+    auto cfg = _scale->filterConfig();
+    String v;
+    v = _server.arg("ema");      if (!v.isEmpty()) { float f = v.toFloat(); if (f > 0.0f && f <= 1.0f) cfg.emaAlpha  = f; }
+    v = _server.arg("deadband"); if (!v.isEmpty()) { float f = v.toFloat(); if (f >= 0.0f) cfg.deadbandG = f; }
+    v = _server.arg("snap");     if (!v.isEmpty()) { float f = v.toFloat(); if (f >= 0.0f) cfg.zeroSnapG = f; }
+    v = _server.arg("samples");  if (!v.isEmpty()) { int   i = v.toInt();   if (i >= 1 && i <= 20) cfg.samples = static_cast<uint8_t>(i); }
+    _scale->setFilterConfig(cfg, true);
+    _server.send(200, "text/plain", "OK");
 }
 
 void WebApp::handleScaleWeight() {
