@@ -22,6 +22,8 @@
 #include "core/ButtonManager.h"
 #include "core/ScaleManager.h"
 #include "core/TimerManager.h"
+#include "core/BuzzerManager.h"
+#include "hal/Esp32Buzzer.h"
 #include "config.h"
 #include <Wire.h>
 
@@ -38,6 +40,7 @@ static hal::Esp32LedStrip      leds;
 static hal::Esp32Button        button1(PIN_BUTTON_1);
 static hal::Esp32Button        button2(PIN_BUTTON_2);
 static hal::Esp32Scale         scale;
+static hal::Esp32Buzzer        buzzer;
 static events::EventBus        eventBus;
 static core::Application       app(serial, eventBus);
 static core::WifiManager       wifiManager(espWifi, storage, portal, espClock, eventBus);
@@ -48,6 +51,7 @@ static core::LedManager        ledManager(leds, espClock, eventBus);
 static core::ButtonManager     buttonManager(button1, button2, eventBus);
 static core::ScaleManager      scaleManager(scale, storage, espClock, eventBus);
 static core::TimerManager      timerManager(espClock, eventBus);
+static core::BuzzerManager     buzzerManager(buzzer, espClock, eventBus);
 
 static void i2cScan() {
     Serial.println("[I2C] Scanning...");
@@ -95,6 +99,7 @@ void setup() {
 
     webApp.setScaleManager(&scaleManager);
     timerManager.begin();
+    buzzerManager.begin();
     wifiManager.begin();
     webApp.begin();
     otaManager.begin();
@@ -103,6 +108,7 @@ void setup() {
 void loop() {
     app.loop();
     buttonManager.loop();
+    buzzerManager.loop();
     timerManager.loop();
     displayManager.loop();
     ledManager.loop();

@@ -43,3 +43,8 @@ static constexpr float   SCALE_DEFAULT_KNOWN_WEIGHT_G = 1000.0f;
 // NVS storage keys (Scale)
 static constexpr char STORAGE_KEY_SCALE_ZERO[]   = "scale_zero";
 static constexpr char STORAGE_KEY_SCALE_FACTOR[] = "scale_factor";
+
+// Buzzer
+static constexpr uint8_t  PIN_BUZZER          = 2;
+static constexpr uint32_t BUZZER_FREQ_HZ      = 2000;
+static constexpr uint32_t BUZZER_BEEP_MS      = 30;

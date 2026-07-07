@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-07-04
+
+### Added
+- HAL layer: `IBuzzer` + `Esp32Buzzer` (LEDC PWM, GPIO 2, não-bloqueante)
+- Core `BuzzerManager`: beep de 30ms a 2kHz ao pressionar qualquer botão (`Button1Down`/`Button2Down`)
+- Constantes `PIN_BUZZER=2`, `BUZZER_FREQ_HZ=2000`, `BUZZER_BEEP_MS=30` em `config.h`
+
 ## [1.0.0] - 2026-07-04
 
 Primeira versão estável. Balança de café completa com timer, LEDs de status, display OLED, interface web, calibração, OTA e configuração WiFi por portal captive.
