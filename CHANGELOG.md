@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-04
+
+### Fixed
+- Display não mostrava mais "Sem calibração" desnecessariamente ao ligar com sensor já calibrado
+- `ScaleManager::begin()` publica `ScaleCalibrated` imediatamente se calibração existe no NVS
+- `DisplayManager` sincroniza estado de calibração diretamente do `ScaleManager` ao sair do logo splash
+
 ## [1.2.0] - 2026-07-04
 
 ### Added

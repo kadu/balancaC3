@@ -98,6 +98,7 @@ void setup() {
     scaleManager.begin();
 
     webApp.setScaleManager(&scaleManager);
+    displayManager.setScaleManager(&scaleManager);
     timerManager.begin();
     buzzerManager.begin();
     wifiManager.begin();
