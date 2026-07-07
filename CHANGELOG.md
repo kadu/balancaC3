@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-07-04
+
+### Changed
+- Página `/config` reformulada com layout de tabs: Balança, LEDs, WiFi, Dispositivo
+- Scan de redes WiFi lazy (só carrega ao abrir a aba WiFi)
+- Browser lembra a última aba aberta via `localStorage`
+- Aba LEDs: guia de cores em formato de tabela com bolinha animada, status e descrição de cada cor
+
 ## [1.2.1] - 2026-07-04
 
 ### Fixed
