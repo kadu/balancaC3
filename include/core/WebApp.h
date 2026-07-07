@@ -55,6 +55,8 @@ private:
     void handleScaleTare();
     void handleScaleCalibrateStep1();
     void handleScaleCalibrateStep2();
+    void handleScaleFilterGet();
+    void handleScaleFilterSet();
 };
 
 } // namespace core

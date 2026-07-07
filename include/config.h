@@ -48,3 +48,9 @@ static constexpr char STORAGE_KEY_SCALE_FACTOR[] = "scale_factor";
 static constexpr uint8_t  PIN_BUZZER          = 2;
 static constexpr uint32_t BUZZER_FREQ_HZ      = 2000;
 static constexpr uint32_t BUZZER_BEEP_MS      = 30;
+
+// NVS storage keys (Scale filter)
+static constexpr char STORAGE_KEY_SCALE_EMA[]      = "scale_ema";
+static constexpr char STORAGE_KEY_SCALE_DEADBAND[] = "scale_dead";
+static constexpr char STORAGE_KEY_SCALE_SNAP[]     = "scale_snap";
+static constexpr char STORAGE_KEY_SCALE_SAMPLES[]  = "scale_samp";

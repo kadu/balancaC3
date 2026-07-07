@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-07-04
+
+### Added
+- Aba Balança: card "Filtro de leitura" com 4 sliders ajustáveis pela interface web
+  - Suavização (EMA alpha 1–50%)
+  - Sensibilidade / deadband (0.1–5.0g)
+  - Zona morta no zero (0.1–10.0g)
+  - Velocidade de leitura (1–20 amostras)
+- Endpoints `GET /scale/filter` e `POST /scale/filter`
+- Configurações do filtro persistidas em NVS
+- `ScaleManager::setFilterConfig()` aplica e persiste parâmetros em runtime
+- Mensagens de sucesso nas configurações somem automaticamente após 3s
+
 ## [1.3.0] - 2026-07-04
 
 ### Changed
