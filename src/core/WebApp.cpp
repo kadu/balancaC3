@@ -82,30 +82,33 @@ static const char CONFIG_HTML[] = R"html(
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Configurações</title>
 <style>
-:root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#666;--bdr:#ddd;--hov:#eef2ff;--inp:#fff;--btn:#0066cc;--bh:#0052a3;--rs:#888;--dan:#cc2200;--danh:#aa1a00;--ok-bg:#d4edda;--ok-c:#155724;--er-bg:#f8d7da;--er-c:#721c24}
-html.dark{--bg:#0f1117;--card:#1e2130;--text:#e0e6f0;--sub:#8892a4;--bdr:#2e3548;--hov:#252d40;--inp:#252a3a;--btn:#4d8ef0;--bh:#3a7ae0;--rs:#6b7280;--dan:#e05540;--danh:#c94030;--ok-bg:#1a3a25;--ok-c:#6ee08a;--er-bg:#3a1a1a;--er-c:#f08080}
+:root{--bg:#f0f2f5;--card:#fff;--text:#1a1a2e;--sub:#666;--bdr:#ddd;--hov:#eef2ff;--inp:#fff;--btn:#0066cc;--bh:#0052a3;--rs:#888;--dan:#cc2200;--danh:#aa1a00;--ok-bg:#d4edda;--ok-c:#155724;--er-bg:#f8d7da;--er-c:#721c24;--tab-act:#0066cc;--tab-act-t:#fff;--tab-in:#e8edf5;--tab-in-t:#555}
+html.dark{--bg:#0f1117;--card:#1e2130;--text:#e0e6f0;--sub:#8892a4;--bdr:#2e3548;--hov:#252d40;--inp:#252a3a;--btn:#4d8ef0;--bh:#3a7ae0;--rs:#6b7280;--dan:#e05540;--danh:#c94030;--ok-bg:#1a3a25;--ok-c:#6ee08a;--er-bg:#3a1a1a;--er-c:#f08080;--tab-act:#4d8ef0;--tab-act-t:#fff;--tab-in:#1a2035;--tab-in-t:#8892a4}
 *{box-sizing:border-box}
-body{font-family:sans-serif;max-width:440px;margin:0 auto;padding:1em;background:var(--bg);color:var(--text)}
-.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.4em}
+body{font-family:sans-serif;max-width:440px;margin:0 auto;padding:.8em;background:var(--bg);color:var(--text)}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:.7em}
 h2{margin:0;font-size:1.2em}
 .thm{background:none;border:1px solid var(--sub);border-radius:20px;padding:.3em .85em;cursor:pointer;color:var(--text);font-size:.82em}
 .back{color:var(--btn);text-decoration:none;font-size:.9em}
-.card{background:var(--card);border-radius:10px;padding:1em;margin:.7em 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
-.card h3{margin:.1em 0 .7em;font-size:.78em;color:var(--sub);text-transform:uppercase;letter-spacing:.05em}
+.tabs{display:flex;gap:.3em;margin-bottom:.8em;background:var(--tab-in);border-radius:10px;padding:.3em}
+.tab{flex:1;padding:.55em .2em;border:none;border-radius:7px;cursor:pointer;font-size:.78em;font-weight:600;transition:background .15s,color .15s;background:transparent;color:var(--tab-in-t)}
+.tab.active{background:var(--tab-act);color:var(--tab-act-t);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.pane{display:none}.pane.active{display:block}
+.card{background:var(--card);border-radius:10px;padding:1em;margin:.6em 0;box-shadow:0 1px 4px rgba(0,0,0,.1)}
 .net{display:flex;justify-content:space-between;align-items:center;padding:.55em .4em;border-radius:6px;cursor:pointer;transition:background .15s}
 .net:hover,.net:active{background:var(--hov)}
 .net.active-net{background:var(--hov);border:1px solid var(--btn)}
 .rs{font-size:.78em;color:var(--rs);white-space:nowrap;padding-left:.5em}
 .cur{font-size:.75em;background:var(--btn);color:#fff;border-radius:10px;padding:.15em .5em;margin-left:.4em;white-space:nowrap}
 label{display:block;font-size:.82em;color:var(--sub);margin:.7em 0 .2em}
-input[type=text],input[type=password]{width:100%;padding:.55em .7em;border:1px solid var(--bdr);border-radius:6px;font-size:1em;background:var(--inp);color:var(--text);outline:none}
+input[type=text],input[type=password],input[type=number]{width:100%;padding:.55em .7em;border:1px solid var(--bdr);border-radius:6px;font-size:1em;background:var(--inp);color:var(--text);outline:none}
 input:focus{border-color:var(--btn)}
-.btn{width:100%;padding:.7em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-size:1em;cursor:pointer;margin-top:.6em;transition:background .15s}
+.btn{width:100%;padding:.7em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-size:1em;cursor:pointer;margin-top:.5em;transition:background .15s}
 .btn:active{background:var(--bh)}
 .btn.dan{background:var(--dan)}
 .btn.dan:active{background:var(--danh)}
-.sep{border:none;border-top:1px solid var(--bdr);margin:.9em 0}
-.msg{padding:.75em;border-radius:6px;text-align:center;margin-top:.6em;font-weight:bold;display:none}
+.sep{border:none;border-top:1px solid var(--bdr);margin:.8em 0}
+.msg{padding:.7em;border-radius:6px;text-align:center;margin-top:.5em;font-weight:bold;display:none}
 .ok{background:var(--ok-bg);color:var(--ok-c)}
 .err{background:var(--er-bg);color:var(--er-c)}
 #confirm{display:none;background:var(--er-bg);border-radius:8px;padding:.9em;margin-top:.6em;text-align:center}
@@ -114,146 +117,223 @@ input:focus{border-color:var(--btn)}
 #confirm button{flex:1;padding:.6em;border:none;border-radius:6px;cursor:pointer;font-size:.95em}
 #confirm .yes{background:var(--dan);color:#fff}
 #confirm .no{background:var(--bdr);color:var(--text)}
+p.hint{color:var(--sub);font-size:.83em;margin:.2em 0 .5em}
 </style></head><body>
 <div class="hdr">
   <a class="back" href="/">&#8592; Voltar</a>
   <h2>Configurações</h2>
   <button class="thm" id="thm" onclick="tog()"></button>
 </div>
-<div class="card">
-  <h3>Rede WiFi</h3>
-  <div id="nets">Escaneando redes...</div>
-  <label>Rede (SSID)</label>
-  <input id="ssid" type="text" placeholder="Nome da rede ou rede oculta" autocomplete="off" spellcheck="false">
-  <label>Senha</label>
-  <input id="pw" type="password" placeholder="Senha da rede" autocomplete="current-password">
-  <button class="btn" onclick="saveWifi()">Salvar e reconectar</button>
-  <div class="msg" id="wifi-msg"></div>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('balanca',this)">&#9878; Balança</button>
+  <button class="tab" onclick="showTab('leds',this)">&#128161; LEDs</button>
+  <button class="tab" onclick="showTab('wifi',this)">&#128246; WiFi</button>
+  <button class="tab" onclick="showTab('device',this)">&#9881; Dispositivo</button>
 </div>
-<div class="card">
-  <h3>Balanca</h3>
-  <p style="color:var(--sub);font-size:.85em;margin:.2em 0 .6em">Peso atual: <strong id="wval">--</strong></p>
-  <button class="btn" onclick="doTare()" style="margin-bottom:.5em">Tarar (zerar)</button>
-  <hr class="sep">
-  <p style="color:var(--sub);font-size:.85em;margin:.2em 0 .4em">Calibracao de dois passos:</p>
-  <p style="color:var(--sub);font-size:.82em;margin:0 0 .4em"><b>Passo 1:</b> plataforma vazia → Tarar acima.<br><b>Passo 2:</b> coloque o peso conhecido e clique Calibrar.</p>
-  <input id="cal-weight" type="number" min="1" max="20000" step="0.1" placeholder="Peso conhecido (g), ex: 1000" style="width:100%;padding:.55em .7em;border:1px solid var(--bdr);border-radius:6px;font-size:1em;background:var(--inp);color:var(--text);margin-bottom:.4em">
-  <button class="btn" onclick="doCalibrate()">Calibrar com esse peso</button>
-  <div class="msg" id="scale-msg"></div>
-</div>
-<div class="card">
-  <h3>LEDs</h3>
-  <div style="display:flex;align-items:center;gap:.5em;margin-bottom:.3em">
-    <label style="flex:1;margin:0">Brilho <span id="bval" style="font-weight:bold"></span></label>
-    <button id="prev-btn" title="Mostrar nos LEDs" onclick="togglePreview()"
-      style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em;opacity:.4">&#128161;</button>
-    <button title="Salvar brilho" onclick="saveBright(D.getElementById('bright').value)"
-      style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em">&#128190;</button>
+
+<!-- Balança -->
+<div id="pane-balanca" class="pane active">
+  <div class="card">
+    <p class="hint">Peso atual: <strong id="wval">--</strong></p>
+    <button class="btn" onclick="doTare()">Tarar (zerar)</button>
+    <hr class="sep">
+    <p class="hint"><b>Calibração:</b> com a plataforma vazia clique em Tarar acima, depois coloque o peso conhecido e informe o valor abaixo.</p>
+    <input id="cal-weight" type="number" min="1" max="20000" step="0.1" placeholder="Peso conhecido (g), ex: 1000">
+    <button class="btn" onclick="doCalibrate()">Calibrar com esse peso</button>
+    <div class="msg" id="scale-msg"></div>
   </div>
-  <input id="bright" type="range" min="10" max="255" style="width:100%;margin:.2em 0"
-    oninput="onSlide(this.value)">
-  <div class="msg" id="led-msg"></div>
 </div>
-<div class="card">
-  <h3>Dispositivo</h3>
-  <a class="btn" href="/update" style="display:block;text-align:center;text-decoration:none;padding:.7em;background:var(--btn);color:#fff;border-radius:6px;margin-bottom:.4em">&#128190; Atualizar Firmware (OTA)</a>
-  <button class="btn" onclick="restartDevice()">Reiniciar dispositivo</button>
-  <hr class="sep">
-  <button class="btn dan" onclick="showConfirm()">Apagar credenciais e reiniciar</button>
-  <div id="confirm">
-    <p>Isso apagará o WiFi salvo e reiniciará o dispositivo.</p>
-    <div class="row">
-      <button class="yes" onclick="doReset()">Sim, apagar</button>
-      <button class="no" onclick="hideConfirm()">Cancelar</button>
+
+<!-- LEDs -->
+<div id="pane-leds" class="pane">
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:.5em;margin-bottom:.3em">
+      <label style="flex:1;margin:0">Brilho <span id="bval" style="font-weight:bold"></span></label>
+      <button id="prev-btn" title="Mostrar nos LEDs" onclick="togglePreview()"
+        style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em;opacity:.4">&#128161;</button>
+      <button title="Salvar brilho" onclick="saveBright(D.getElementById('bright').value)"
+        style="background:none;border:none;cursor:pointer;font-size:1.3em;padding:.1em">&#128190;</button>
+    </div>
+    <input id="bright" type="range" min="10" max="255" style="width:100%;margin:.2em 0" oninput="onSlide(this.value)">
+    <div class="msg" id="led-msg"></div>
+  </div>
+  <div class="card">
+    <p style="font-size:.78em;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:0 0 .7em;font-weight:600">Guia de cores</p>
+    <table style="width:100%;border-collapse:collapse;font-size:.85em">
+      <thead>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <th style="text-align:left;padding:.4em .5em;color:var(--sub);font-weight:600;width:36px">Cor</th>
+          <th style="text-align:left;padding:.4em .5em;color:var(--sub);font-weight:600;width:38%">Status</th>
+          <th style="text-align:left;padding:.4em .5em;color:var(--sub);font-weight:600">Significado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#ffffff;border:1px solid var(--bdr);margin:auto"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Branco</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Inicializando o dispositivo</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#22c55e;margin:auto;animation:blink 1s step-start infinite"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Verde piscando</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Conectando ao WiFi</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#22c55e;margin:auto"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Verde fixo → apaga</td>
+          <td style="padding:.55em .5em;color:var(--sub)">WiFi conectado com sucesso</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#fbbf24;margin:auto;animation:breathe 3s ease-in-out infinite"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Amarelo respirando</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Modo configuração — sem WiFi, acesse BalancaC3-Config</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#3b82f6;margin:auto"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Azul em barra</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Atualização de firmware (OTA) em andamento</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#ef4444;margin:auto;animation:blink .4s step-start infinite"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Vermelho piscando</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Erro na atualização OTA</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--bdr)">
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#22c55e;margin:auto"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Verde (botão 1)</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Botão pressionado — inicia ou pausa o timer</td>
+        </tr>
+        <tr>
+          <td style="padding:.55em .5em"><div style="width:13px;height:13px;border-radius:50%;background:#ef4444;margin:auto"></div></td>
+          <td style="padding:.55em .5em;font-weight:500">Vermelho (botão 2)</td>
+          <td style="padding:.55em .5em;color:var(--sub)">Botão pressionado — executa a tara da balança</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<style>
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes breathe{0%,100%{opacity:.25}50%{opacity:1}}
+</style>
+
+<!-- Dispositivo -->
+<div id="pane-device" class="pane">
+  <div class="card">
+    <a class="btn" href="/update" style="display:block;text-align:center;text-decoration:none;padding:.7em;background:var(--btn);color:#fff;border-radius:6px">&#128190; Atualizar Firmware (OTA)</a>
+    <button class="btn" onclick="restartDevice()" style="margin-top:.5em">Reiniciar dispositivo</button>
+    <div class="msg" id="dev-msg"></div>
+    <hr class="sep">
+    <button class="btn dan" onclick="showConfirm()">Apagar credenciais e reiniciar</button>
+    <div id="confirm">
+      <p>Isso apagará o WiFi salvo e reiniciará o dispositivo.</p>
+      <div class="row">
+        <button class="yes" onclick="doReset()">Sim, apagar</button>
+        <button class="no" onclick="hideConfirm()">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>
+
+<!-- WiFi -->
+<div id="pane-wifi" class="pane">
+  <div class="card">
+    <div id="nets">Escaneando redes...</div>
+    <label>Rede (SSID)</label>
+    <input id="ssid" type="text" placeholder="Nome da rede ou rede oculta" autocomplete="off" spellcheck="false">
+    <label>Senha</label>
+    <input id="pw" type="password" placeholder="Senha da rede" autocomplete="current-password">
+    <button class="btn" onclick="saveWifi()">Salvar e reconectar</button>
+    <div class="msg" id="wifi-msg"></div>
+  </div>
+</div>
+
 <script>
 var D=document,H=D.documentElement;
 function applyDark(d){H.classList.toggle('dark',d);D.getElementById('thm').textContent=d?'Claro':'Escuro'}
 function tog(){var d=!H.classList.contains('dark');localStorage.setItem('t',d?'1':'0');applyDark(d)}
 (function(){var s=localStorage.getItem('t');applyDark(s!=null?s==='1':window.matchMedia('(prefers-color-scheme:dark)').matches)})();
 
-function sig(r){return r>-60?'&#9602;&#9604;&#9606;&#9608;':r>-70?'&#9602;&#9604;&#9606;_':r>-80?'&#9602;&#9604;__':'&#9602;___'}
-var currentSsid='';
-Promise.all([
-  fetch('/networks').then(function(r){return r.json()}),
-  fetch('/config/ssid').then(function(r){return r.text()})
-]).then(function(res){
-  var ns=res[0]; currentSsid=res[1].trim();
-  var d=D.getElementById('nets');
-  if(!ns||!ns.length){d.textContent='Nenhuma rede encontrada.';return}
-  d.innerHTML='';
-  ns.forEach(function(n){
-    var isCur=(n.ssid===currentSsid);
-    var e=D.createElement('div');
-    e.className='net'+(isCur?' active-net':'');
-    var badge=isCur?'<span class="cur">&#10003; conectada</span>':'';
-    e.innerHTML='<span>'+n.ssid+badge+'</span><span class="rs">'+sig(n.rssi)+' '+n.rssi+'</span>';
-    e.onclick=function(){D.getElementById('ssid').value=n.ssid;D.getElementById('pw').value='';D.getElementById('pw').focus()};
-    d.appendChild(e);
-  });
-}).catch(function(){D.getElementById('nets').textContent='Falha no scan.'});
-
-function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'ok':'err');m.textContent=txt;m.style.display='block'}
-fetch('/config/led').then(function(r){return r.text()}).then(function(v){
-  var s=D.getElementById('bright');s.value=v;D.getElementById('bval').textContent=v;
-}).catch(function(){});
-var previewOn=false;
-function togglePreview(){
-  previewOn=!previewOn;
-  var btn=D.getElementById('prev-btn');
-  btn.style.opacity=previewOn?'1':'0.4';
-  if(!previewOn) fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});
-  else sendPreview(D.getElementById('bright').value);
+function showTab(id,btn){
+  D.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active')});
+  D.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active')});
+  D.getElementById('pane-'+id).classList.add('active');
+  btn.classList.add('active');
+  localStorage.setItem('tab',id);
+  if(id==='wifi' && !wifiLoaded) loadWifi();
 }
-function sendPreview(v){if(previewOn) fetch('/config/led/preview',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'brightness='+v}).catch(function(){})}
-function onSlide(v){D.getElementById('bval').textContent=v;sendPreview(v);}
-// Scale
+// Restore last tab
+(function(){var t=localStorage.getItem('tab');if(t){var btn=D.querySelector('.tab[onclick*="\''+t+'\'"]');if(btn) showTab(t,btn);}})();
+
+// Scale polling
+var wifiLoaded=false;
 (function pollWeight(){
   fetch('/scale/weight').then(function(r){return r.json()}).then(function(d){
     var w=d.calibrated?(d.grams>=1000||d.grams<=-1000?(d.grams/1000).toFixed(3)+' kg':d.grams.toFixed(1)+' g'):'Sem calibracao';
     D.getElementById('wval').textContent=w;
   }).catch(function(){}).finally(function(){setTimeout(pollWeight,200)});
 })();
-function doTare(){
-  fetch('/scale/tare',{method:'POST'}).then(function(){showMsg('scale-msg',true,'Tarado!')})
-  .catch(function(){showMsg('scale-msg',false,'Erro ao tarar.')});
-}
+function showMsg(id,ok,txt){var m=D.getElementById(id);m.className='msg '+(ok?'ok':'err');m.textContent=txt;m.style.display='block'}
+function doTare(){fetch('/scale/tare',{method:'POST'}).then(function(){showMsg('scale-msg',true,'Tarado!')}).catch(function(){showMsg('scale-msg',false,'Erro ao tarar.')})}
 function doCalibrate(){
   var w=parseFloat(D.getElementById('cal-weight').value);
   if(!w||w<=0){D.getElementById('cal-weight').focus();return}
-  fetch('/scale/calibrate',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:'weight='+w})
+  fetch('/scale/calibrate',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'weight='+w})
   .then(function(r){return r.text()}).then(function(){showMsg('scale-msg',true,'Calibrado com '+w+'g!')})
   .catch(function(){showMsg('scale-msg',false,'Erro ao calibrar.')});
 }
+
+// LED
+fetch('/config/led').then(function(r){return r.text()}).then(function(v){
+  var s=D.getElementById('bright');s.value=v;D.getElementById('bval').textContent=v;
+}).catch(function(){});
+var previewOn=false;
+function togglePreview(){
+  previewOn=!previewOn;
+  var btn=D.getElementById('prev-btn');btn.style.opacity=previewOn?'1':'0.4';
+  if(!previewOn) fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});
+  else sendPreview(D.getElementById('bright').value);
+}
+function sendPreview(v){if(previewOn) fetch('/config/led/preview',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'brightness='+v}).catch(function(){})}
+function onSlide(v){D.getElementById('bval').textContent=v;sendPreview(v);}
 function saveBright(v){
-  fetch('/config/led',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:'brightness='+v})
+  fetch('/config/led',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'brightness='+v})
   .then(function(){showMsg('led-msg',true,'Brilho salvo!');if(previewOn){previewOn=false;D.getElementById('prev-btn').style.opacity='0.4';fetch('/config/led/preview/stop',{method:'POST'}).catch(function(){});}})
   .catch(function(){showMsg('led-msg',false,'Erro ao salvar.');});
 }
 
-function saveWifi(){
-  var ssid=D.getElementById('ssid').value.trim();
-  var pw=D.getElementById('pw').value;
-  if(!ssid){D.getElementById('ssid').focus();return}
-  fetch('/config/wifi',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:'ssid='+encodeURIComponent(ssid)+'&password='+encodeURIComponent(pw)})
-  .then(function(r){return r.text()}).then(function(){showMsg('wifi-msg',true,'Salvo! Reconectando...')})
-  .catch(function(){showMsg('wifi-msg',false,'Erro ao salvar.')});
-}
-function restartDevice(){
-  fetch('/config/restart',{method:'POST'}).catch(function(){});
-  showMsg('wifi-msg',true,'Reiniciando...');
-}
+// Device
+function restartDevice(){fetch('/config/restart',{method:'POST'}).catch(function(){});showMsg('dev-msg',true,'Reiniciando...')}
 function showConfirm(){D.getElementById('confirm').style.display='block'}
 function hideConfirm(){D.getElementById('confirm').style.display='none'}
-function doReset(){
-  hideConfirm();
-  fetch('/config/reset',{method:'POST'}).catch(function(){});
-  showMsg('wifi-msg',true,'Credenciais apagadas. Reiniciando...');
+function doReset(){hideConfirm();fetch('/config/reset',{method:'POST'}).catch(function(){});showMsg('dev-msg',true,'Credenciais apagadas. Reiniciando...')}
+
+// WiFi — lazy load only when tab is opened
+function loadWifi(){
+  wifiLoaded=true;
+  var sig=function(r){return r>-60?'&#9602;&#9604;&#9606;&#9608;':r>-70?'&#9602;&#9604;&#9606;_':r>-80?'&#9602;&#9604;__':'&#9602;___'};
+  Promise.all([fetch('/networks').then(function(r){return r.json()}),fetch('/config/ssid').then(function(r){return r.text()})])
+  .then(function(res){
+    var ns=res[0],cur=res[1].trim(),d=D.getElementById('nets');
+    if(!ns||!ns.length){d.textContent='Nenhuma rede encontrada.';return}
+    d.innerHTML='';
+    ns.forEach(function(n){
+      var isCur=(n.ssid===cur);
+      var e=D.createElement('div');e.className='net'+(isCur?' active-net':'');
+      var badge=isCur?'<span class="cur">&#10003; conectada</span>':'';
+      e.innerHTML='<span>'+n.ssid+badge+'</span><span class="rs">'+sig(n.rssi)+' '+n.rssi+'</span>';
+      e.onclick=function(){D.getElementById('ssid').value=n.ssid;D.getElementById('pw').value='';D.getElementById('pw').focus()};
+      d.appendChild(e);
+    });
+  }).catch(function(){D.getElementById('nets').textContent='Falha no scan.'});
+}
+function saveWifi(){
+  var ssid=D.getElementById('ssid').value.trim(),pw=D.getElementById('pw').value;
+  if(!ssid){D.getElementById('ssid').focus();return}
+  fetch('/config/wifi',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'ssid='+encodeURIComponent(ssid)+'&password='+encodeURIComponent(pw)})
+  .then(function(r){return r.text()}).then(function(){showMsg('wifi-msg',true,'Salvo! Reconectando...')})
+  .catch(function(){showMsg('wifi-msg',false,'Erro ao salvar.')});
 }
 </script></body></html>
 )html";
