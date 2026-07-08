@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-07-04
+
+### Added
+- Ícone de status do timer ao lado do tempo no display
+  - **▶** (triângulo) quando o timer está rodando
+  - **⏸** (dois retângulos) quando pausado ou parado
+- `IDisplay`: `drawVLine()`, `drawBox()`, `drawTriangle()`
+- `DisplayManager` assina `TimerStarted` e `TimerPaused` para atualizar o ícone em tempo real
+
 ## [1.4.0] - 2026-07-04
 
 ### Added

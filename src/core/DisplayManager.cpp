@@ -23,6 +23,8 @@ void DisplayManager::begin() {
     _eventBus.subscribe(events::EventType::ScaleCalibrated,    this);
     _eventBus.subscribe(events::EventType::TimerTick,          this);
     _eventBus.subscribe(events::EventType::TimerReset,         this);
+    _eventBus.subscribe(events::EventType::TimerStarted,       this);
+    _eventBus.subscribe(events::EventType::TimerPaused,        this);
 
     transitionTo(State::SplashLogo);
 }
@@ -98,10 +100,24 @@ void DisplayManager::onEvent(const events::Event& event) {
             _calibrated = true;
             if (_state == State::Scale) drawScale();
             break;
-        case events::EventType::TimerTick:
+        case events::EventType::TimerStarted:
+            _timerRunning = true;
+            if (_state == State::Scale) drawScale();
+            break;
+        case events::EventType::TimerPaused:
+            _timerRunning = false;
+            if (_state == State::Scale) drawScale();
+            break;
+        case events::EventType::TimerTick: {
+            auto* p = static_cast<const TimerPayload*>(event.payload);
+            if (p) { _timerMin = p->minutes; _timerSec = p->seconds; }
+            if (_state == State::Scale) drawScale();
+            break;
+        }
         case events::EventType::TimerReset: {
             auto* p = static_cast<const TimerPayload*>(event.payload);
             if (p) { _timerMin = p->minutes; _timerSec = p->seconds; }
+            _timerRunning = false;
             if (_state == State::Scale) drawScale();
             break;
         }
@@ -151,11 +167,27 @@ void DisplayManager::transitionTo(State next) {
 void DisplayManager::drawScale() {
     _display.clear();
 
-    // Timer
+    // Timer — icon + text centered together
     char timeBuf[8];
     snprintf(timeBuf, sizeof(timeBuf), "%u:%02u", _timerMin, _timerSec);
     _display.setFontLarge();
-    _display.drawStringCenter(20, timeBuf);
+    uint8_t tw  = _display.stringWidth(timeBuf);
+    // icon is 7px wide + 4px gap
+    uint8_t iconW = 7;
+    uint8_t gap   = 4;
+    uint8_t totalW = iconW + gap + tw;
+    uint8_t startX = (128 - totalW) / 2;
+    uint8_t iconTop = 20 - 12; // baseline 20, font ~14px tall → top at ~6
+
+    if (_timerRunning) {
+        // ▶ play triangle: points at (x,top), (x, top+12), (x+7, top+6)
+        _display.drawTriangle(startX, iconTop, startX, iconTop + 12, startX + iconW, iconTop + 6);
+    } else {
+        // ⏸ pause: two vertical bars 3px wide with 1px gap
+        _display.drawBox(startX,         iconTop, 3, 12);
+        _display.drawBox(startX + 4,     iconTop, 3, 12);
+    }
+    _display.drawStringAt(startX + iconW + gap, 20, timeBuf);
 
     // Weight
     if (!_calibrated) {
