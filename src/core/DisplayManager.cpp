@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#include <ArduinoJson.h>
 #include "core/DisplayManager.h"
 #include "core/ScaleManager.h"
 #include "core/TimerManager.h"
@@ -26,9 +28,13 @@ void DisplayManager::begin() {
     _eventBus.subscribe(events::EventType::TimerReset,         this);
     _eventBus.subscribe(events::EventType::TimerStarted,       this);
     _eventBus.subscribe(events::EventType::TimerPaused,        this);
-    _eventBus.subscribe(events::EventType::RecipeMenuOpen,     this);
-    _eventBus.subscribe(events::EventType::RecipeCancelled,    this);
-    _eventBus.subscribe(events::EventType::RecipeSelected,     this);
+    _eventBus.subscribe(events::EventType::RecipeMenuOpen,       this);
+    _eventBus.subscribe(events::EventType::RecipeCancelled,      this);
+    _eventBus.subscribe(events::EventType::RecipeSelected,       this);
+    _eventBus.subscribe(events::EventType::RecipeStepStarted,    this);
+    _eventBus.subscribe(events::EventType::RecipeStepTick,       this);
+    _eventBus.subscribe(events::EventType::RecipeStepCompleted,  this);
+    _eventBus.subscribe(events::EventType::RecipeFinished,       this);
 
     transitionTo(State::SplashLogo);
 }
@@ -93,7 +99,8 @@ void DisplayManager::onEvent(const events::Event& event) {
         case events::EventType::WeightUpdated: {
             auto* p = static_cast<const WeightPayload*>(event.payload);
             if (p) { _lastWeight = p->grams; _calibrated = p->calibrated; }
-            if (_state == State::Scale) drawScale();
+            if (_state == State::Scale)        drawScale();
+            else if (_state == State::RecipeActive) drawRecipeActive();
             break;
         }
         case events::EventType::ScaleTared:
@@ -117,11 +124,30 @@ void DisplayManager::onEvent(const events::Event& event) {
             drawRecipeMenu(event.payload);
             break;
         case events::EventType::RecipeCancelled:
-        case events::EventType::RecipeSelected:
-            if (_state == State::RecipeMenu) {
-                transitionTo(State::Scale);
-            }
+        case events::EventType::RecipeFinished:
+            transitionTo(State::Scale);
             break;
+        case events::EventType::RecipeSelected:
+            _state = State::RecipeActive;
+            break;
+        case events::EventType::RecipeStepStarted:
+        case events::EventType::RecipeStepTick:
+        case events::EventType::RecipeStepCompleted: {
+            auto* p = static_cast<const RecipeStepPayload*>(event.payload);
+            if (p) {
+                strncpy(_stepType, p->stepType, sizeof(_stepType) - 1);
+                _stepType[sizeof(_stepType) - 1] = '\0';
+                _totalElapsed  = p->totalElapsedSecs;
+                _stepRemaining = p->remainingSecs;
+                _stepWater     = p->stepWater;
+                _cumulWater    = p->cumulativeWater;
+                _stepRunning   = p->running;
+                _stepIndex     = p->stepIndex;
+                _stepTotal     = p->totalSteps;
+            }
+            if (_state == State::RecipeActive) drawRecipeActive();
+            break;
+        }
         case events::EventType::TimerTick: {
             auto* p = static_cast<const TimerPayload*>(event.payload);
             if (p) { _timerMin = p->minutes; _timerSec = p->seconds; }
@@ -246,6 +272,71 @@ void DisplayManager::drawSplashAp() {
     _display.show();
 }
 
+// ── Recipe active ─────────────────────────────────────────────────────────────
+//
+//  line  8  │ Despejo  (1/4)              (small)
+//  line 14  ├──────────────────────────── (hline)
+//  line 23  │ ▶ 0:23       ▼ 0:07        (medium — elapsed | countdown)
+//  line 35  ├──────────────────────────── (hline)
+//  line 44  │ Alvo: 40ml → 300ml         (small)
+//  line 56  │ 125.3g                      (XLarge — current weight)
+//
+void DisplayManager::drawRecipeActive() {
+    _display.clear();
+
+    // Step header
+    char hdr[40];
+    snprintf(hdr, sizeof(hdr), "%s  (%u/%u)", _stepType, _stepIndex + 1, _stepTotal);
+    _display.setFontSmall();
+    _display.drawStringCenter(8, hdr);
+    _display.drawHLine(0, 11, 128);
+
+    // Elapsed | Countdown — medium font, side by side
+    char elBuf[8], rmBuf[8];
+    snprintf(elBuf, sizeof(elBuf), "%lu:%02lu", _totalElapsed / 60, _totalElapsed % 60);
+    snprintf(rmBuf, sizeof(rmBuf), "%lu:%02lu", _stepRemaining / 60, _stepRemaining % 60);
+
+    _display.setFontMedium();
+    if (_stepRunning) {
+        // ▶ elapsed
+        _display.drawString(2, 23, ">");
+        _display.drawString(12, 23, elBuf);
+    } else {
+        // waiting for weight change — show dashes
+        _display.drawString(2, 23, "-");
+        _display.drawString(12, 23, "0:00");
+    }
+
+    // ▼ countdown
+    if (_stepRemaining > 0 || !_stepRunning) {
+        uint8_t rx = 68;
+        _display.drawString(rx, 23, "v");
+        _display.drawString(rx + 10, 23, rmBuf);
+    }
+
+    _display.drawHLine(0, 28, 128);
+
+    // Water target
+    char wBuf[32];
+    if (_stepWater > 0)
+        snprintf(wBuf, sizeof(wBuf), "Alvo: %uml -> %uml", _stepWater, _cumulWater);
+    else
+        snprintf(wBuf, sizeof(wBuf), "Aguardar...");
+    _display.setFontSmall();
+    _display.drawStringCenter(38, wBuf);
+
+    // Current weight — XLarge
+    char gwBuf[12];
+    if (_lastWeight >= 1000.0f)
+        snprintf(gwBuf, sizeof(gwBuf), "%.2fkg", _lastWeight / 1000.0f);
+    else
+        snprintf(gwBuf, sizeof(gwBuf), "%.1fg", _lastWeight);
+    _display.setFontLarge();
+    _display.drawStringCenter(62, gwBuf);
+
+    _display.show();
+}
+
 // ── Recipe menu ──────────────────────────────────────────────────────────────
 //
 //  line  8  │ RECEITAS              (small, center)
@@ -265,8 +356,6 @@ void DisplayManager::drawRecipeMenu(const void* payload) {
     _display.drawStringCenter(8, "RECEITAS");
     _display.drawHLine(0, 11, 128);
 
-    // 3 visible items with scroll window following selection
-    // Layout: y = 22, 34, 46  →  hline 52  →  hint 62
     const uint8_t VISIBLE = 3;
     uint8_t startIdx = 0;
     if (p->selectedIndex >= VISIBLE) startIdx = p->selectedIndex - VISIBLE + 1;
@@ -275,23 +364,28 @@ void DisplayManager::drawRecipeMenu(const void* payload) {
         uint8_t idx = startIdx + i;
         uint8_t y   = 22 + i * 12;
         bool    sel = (idx == p->selectedIndex);
+        bool    cfm = sel && p->confirmed;
+
         if (sel) {
-            _display.drawString(2,  y, ">");
+            _display.drawString(2,  y, cfm ? "*" : ">");
             _display.drawString(12, y, p->items[idx].name);
+            if (cfm) _display.drawString(110, y, "ok?");
         } else {
             _display.drawString(12, y, p->items[idx].name);
         }
     }
 
-    // Scroll indicators
-    if (startIdx > 0)
-        _display.drawString(122, 22, "^");
-    if (startIdx + VISIBLE < p->itemCount)
-        _display.drawString(122, 46, "v");
+    if (startIdx > 0)           _display.drawString(122, 22, "^");
+    if (startIdx + VISIBLE < p->itemCount) _display.drawString(122, 46, "v");
 
     _display.drawHLine(0, 52, 128);
-    _display.drawString(2,  62, "[1]nav");
-    _display.drawStringAt(68, 62, "[2L]ok");
+    if (p->confirmed) {
+        _display.drawString(2,  58, "[2L] iniciar");
+        _display.drawString(2,  64, "[1]  cancelar");
+    } else {
+        _display.drawString(2,  62, "[1] navegar");
+        _display.drawStringAt(68, 62, "[2L] selec.");
+    }
     _display.show();
 }
 

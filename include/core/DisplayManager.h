@@ -27,6 +27,7 @@ private:
         SplashAp,
         Scale,
         RecipeMenu,
+        RecipeActive,
     };
 
     hal::IDisplay&    _display;
@@ -47,6 +48,16 @@ private:
     uint8_t  _timerSec     = 0;
     bool     _timerRunning = false;
 
+    // Recipe active mode
+    char     _stepType[24]    = {};
+    uint32_t _totalElapsed    = 0;
+    uint32_t _stepRemaining   = 0;
+    uint16_t _stepWater       = 0;
+    uint16_t _cumulWater      = 0;
+    bool     _stepRunning     = false;
+    uint8_t  _stepIndex       = 0;
+    uint8_t  _stepTotal       = 0;
+
     static constexpr uint32_t SPLASH_LOGO_MS      = 3000;
     static constexpr uint32_t SPLASH_CONNECTED_MS = 3000;
     static constexpr uint32_t SPLASH_AP_MS        = 2500;
@@ -59,6 +70,7 @@ private:
     void drawSplashConnected();
     void drawSplashAp();
     void drawRecipeMenu(const void* payload);
+    void drawRecipeActive();
 };
 
 } // namespace core
