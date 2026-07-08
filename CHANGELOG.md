@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-07-04
+
+### Added
+- HAL layer: `IFileSystem` + `Esp32FileSystem` (LittleFS, formatOnFail)
+- Core `RecipeStorage`: CRUD de receitas em JSON no LittleFS (`/recipes/<id>.json`)
+- Aba **Receitas** (primeira aba em `/config`) com lista, cadastro e edição
+- Estrutura de receita: título, moagem, água total, café (g), temperatura, etapas
+- Etapas com tipo (Despejo, Flor, Aguardar, Redemoinho, Mexa, Personalizado), água, duração, detalhe
+- Sugestão automática de água restante ao adicionar nova etapa
+- Campo de água desabilitado e zerado automaticamente ao selecionar "Aguardar"
+- Validação ao salvar: impede salvar se água total não foi totalmente distribuída
+- Tempo total da receita calculado em tempo real e exibido no formulário
+- Lista de receitas exibe água total e tempo total (M:SS) por receita
+- `totalSecs` e `waterTotal` incluídos no índice de receitas
+- `bblanchon/ArduinoJson @ ^6.21.5` adicionado ao `platformio.ini`
+- `-DARDUINOJSON_ENABLE_PROGMEM=0` para compatibilidade com C++17 no ESP32
+
 ## [1.5.0] - 2026-07-04
 
 ### Added
