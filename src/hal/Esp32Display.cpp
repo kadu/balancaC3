@@ -54,6 +54,18 @@ void Esp32Display::drawHLine(uint8_t x, uint8_t y, uint8_t width) {
     _u8g2.drawHLine(x, y, width);
 }
 
+void Esp32Display::drawVLine(uint8_t x, uint8_t y, uint8_t height) {
+    _u8g2.drawVLine(x, y, height);
+}
+
+void Esp32Display::drawBox(uint8_t x, uint8_t y, uint8_t w, uint8_t h) {
+    _u8g2.drawBox(x, y, w, h);
+}
+
+void Esp32Display::drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2) {
+    _u8g2.drawTriangle(x0, y0, x1, y1, x2, y2);
+}
+
 void Esp32Display::drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) {
     // U8g2 expects XBM format (LSB first); the image is already MSB (standard bitmap).
     // Use drawXBMP for standard byte order bitmaps.

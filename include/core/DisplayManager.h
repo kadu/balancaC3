@@ -42,8 +42,9 @@ private:
     float    _lastWeight  = 0.0f;
     bool     _calibrated  = false;
     char     _ip[16]      = {};
-    uint16_t _timerMin    = 0;
-    uint8_t  _timerSec    = 0;
+    uint16_t _timerMin     = 0;
+    uint8_t  _timerSec     = 0;
+    bool     _timerRunning = false;
 
     static constexpr uint32_t SPLASH_LOGO_MS      = 3000;
     static constexpr uint32_t SPLASH_CONNECTED_MS = 3000;
