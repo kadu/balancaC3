@@ -26,6 +26,7 @@ private:
         SplashConnected,
         SplashAp,
         Scale,
+        RecipeMenu,
     };
 
     hal::IDisplay&    _display;
@@ -57,6 +58,7 @@ private:
     void drawSplashLogo();
     void drawSplashConnected();
     void drawSplashAp();
+    void drawRecipeMenu(const void* payload);
 };
 
 } // namespace core

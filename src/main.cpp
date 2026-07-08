@@ -23,6 +23,7 @@
 #include "core/ScaleManager.h"
 #include "core/TimerManager.h"
 #include "core/BuzzerManager.h"
+#include "core/RecipeManager.h"
 #include "hal/Esp32Buzzer.h"
 #include "config.h"
 #include <Wire.h>
@@ -52,6 +53,7 @@ static core::ButtonManager     buttonManager(button1, button2, eventBus);
 static core::ScaleManager      scaleManager(scale, storage, espClock, eventBus);
 static core::TimerManager      timerManager(espClock, eventBus);
 static core::BuzzerManager     buzzerManager(buzzer, espClock, eventBus);
+static core::RecipeManager     recipeManager(eventBus);
 
 static void i2cScan() {
     Serial.println("[I2C] Scanning...");
@@ -101,6 +103,7 @@ void setup() {
     displayManager.setScaleManager(&scaleManager);
     timerManager.begin();
     buzzerManager.begin();
+    recipeManager.begin();
     wifiManager.begin();
     webApp.begin();
     otaManager.begin();

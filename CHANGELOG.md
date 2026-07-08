@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-07-04
+
+### Added
+- Modo de receitas com menu de seleção no display
+- `RecipeManager`: máquina de estados Menu/Idle com catálogo de receitas
+- Menu ativado por clique longo no botão 2
+- Botão 1 navega para baixo (com scroll de 3 itens visíveis e indicadores `^`/`v`)
+- Clique longo botão 2 seleciona o item; clique longo botão 1 cancela
+- "Sem Receita" volta ao modo de pesagem normal
+- Receita 1/2/3 fecham o menu (stub — sem ação ainda)
+- `Button2LongPressed` adicionado ao `ButtonManager`
+- Novos eventos: `Button2LongPressed`, `RecipeMenuOpen`, `RecipeSelected`, `RecipeCancelled`
+- `DisplayManager`: estado `RecipeMenu` com layout de menu e hints de navegação
+
 ## [1.4.1] - 2026-07-04
 
 ### Added
