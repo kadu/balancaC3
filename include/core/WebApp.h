@@ -9,15 +9,17 @@
 
 namespace core {
 
-// Forward declaration to avoid circular include
+// Forward declarations to avoid circular include
 class ScaleManager;
+class RecipeStorage;
 
 class WebApp final : public events::IEventHandler {
 public:
     WebApp(hal::IWebServer& server, hal::IWifi& wifi, hal::IStorage& storage,
            hal::IDevice& device, events::EventBus& eventBus);
 
-    void setScaleManager(ScaleManager* scale) { _scale = scale; }
+    void setScaleManager(ScaleManager* scale)     { _scale   = scale;   }
+    void setRecipeStorage(RecipeStorage* storage) { _recipes = storage; }
 
     void begin();
     void loop();
@@ -31,6 +33,7 @@ private:
     hal::IDevice&     _device;
     events::EventBus& _eventBus;
     ScaleManager*     _scale          = nullptr;
+    RecipeStorage*    _recipes        = nullptr;
     bool              _running          = false;
     bool              _routesRegistered = false;
     bool              _pendingRestart   = false;
@@ -57,6 +60,10 @@ private:
     void handleScaleCalibrateStep2();
     void handleScaleFilterGet();
     void handleScaleFilterSet();
+    void handleRecipeList();
+    void handleRecipeGet();
+    void handleRecipeSave();
+    void handleRecipeDelete();
 };
 
 } // namespace core

@@ -24,7 +24,9 @@
 #include "core/TimerManager.h"
 #include "core/BuzzerManager.h"
 #include "core/RecipeManager.h"
+#include "core/RecipeStorage.h"
 #include "hal/Esp32Buzzer.h"
+#include "hal/Esp32FileSystem.h"
 #include "config.h"
 #include <Wire.h>
 
@@ -42,6 +44,7 @@ static hal::Esp32Button        button1(PIN_BUTTON_1);
 static hal::Esp32Button        button2(PIN_BUTTON_2);
 static hal::Esp32Scale         scale;
 static hal::Esp32Buzzer        buzzer;
+static hal::Esp32FileSystem    fileSystem;
 static events::EventBus        eventBus;
 static core::Application       app(serial, eventBus);
 static core::WifiManager       wifiManager(espWifi, storage, portal, espClock, eventBus);
@@ -54,6 +57,7 @@ static core::ScaleManager      scaleManager(scale, storage, espClock, eventBus);
 static core::TimerManager      timerManager(espClock, eventBus);
 static core::BuzzerManager     buzzerManager(buzzer, espClock, eventBus);
 static core::RecipeManager     recipeManager(eventBus);
+static core::RecipeStorage     recipeStorage(fileSystem);
 
 static void i2cScan() {
     Serial.println("[I2C] Scanning...");
@@ -84,6 +88,9 @@ void setup() {
     // storage.remove(STORAGE_KEY_WIFI_SSID);
     // storage.remove(STORAGE_KEY_WIFI_PASS);
 
+    fileSystem.begin();
+    recipeStorage.begin();
+
     Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
     i2cScan();
 
@@ -100,6 +107,7 @@ void setup() {
     scaleManager.begin();
 
     webApp.setScaleManager(&scaleManager);
+    webApp.setRecipeStorage(&recipeStorage);
     displayManager.setScaleManager(&scaleManager);
     timerManager.begin();
     buzzerManager.begin();

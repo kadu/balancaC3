@@ -1,5 +1,6 @@
 #include "core/WebApp.h"
 #include "core/ScaleManager.h"
+#include "core/RecipeStorage.h"
 #include "events/EventType.h"
 #include "config.h"
 #include <Arduino.h>
@@ -126,14 +127,53 @@ p.hint{color:var(--sub);font-size:.83em;margin:.2em 0 .5em}
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="showTab('balanca',this)">&#9878; Balança</button>
+  <button class="tab active" onclick="showTab('receitas',this)">&#9749; Receitas</button>
+  <button class="tab" onclick="showTab('balanca',this)">&#9878; Balança</button>
   <button class="tab" onclick="showTab('leds',this)">&#128161; LEDs</button>
   <button class="tab" onclick="showTab('wifi',this)">&#128246; WiFi</button>
   <button class="tab" onclick="showTab('device',this)">&#9881; Dispositivo</button>
 </div>
 
+<!-- Receitas -->
+<div id="pane-receitas" class="pane active">
+  <div id="recipe-list-view">
+    <div class="card" id="recipe-list-card">
+      <p class="hint" id="recipe-empty" style="display:none">Nenhuma receita cadastrada.</p>
+      <div id="recipe-items"></div>
+      <button class="btn" onclick="showRecipeForm(null)" style="margin-top:.5em">+ Nova Receita</button>
+    </div>
+  </div>
+  <div id="recipe-form-view" style="display:none">
+    <div class="card">
+      <p style="font-size:.78em;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:0 0 .7em;font-weight:600" id="recipe-form-title">Nova Receita</p>
+      <input type="hidden" id="rf-id" value="0">
+      <label>Título</label>
+      <input id="rf-title" type="text" placeholder="Ex: V60 Clássico">
+      <label>Tamanho da moagem</label>
+      <input id="rf-grind" type="text" placeholder="Ex: Médio-fino">
+      <label>Água total (ml)</label>
+      <input id="rf-water" type="number" min="1" max="2000" placeholder="300" oninput="updateWaterLeft()">
+      <label>Café (g)</label>
+      <input id="rf-coffee" type="number" min="1" max="200" placeholder="20">
+      <label>Temperatura (°C)</label>
+      <input id="rf-heat" type="number" min="60" max="100" placeholder="93">
+    </div>
+    <div class="card">
+      <p style="font-size:.78em;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:0 0 .4em;font-weight:600">Preparo</p>
+      <p class="hint" style="display:flex;justify-content:space-between"><span>Água restante: <strong id="water-left">--</strong></span><span>Tempo total: <strong id="total-time">0:00</strong></span></p>
+      <div id="steps-list"></div>
+      <button class="btn" onclick="addStep()" style="background:var(--bdr);color:var(--text);margin-top:.4em">+ Adicionar etapa</button>
+    </div>
+    <div style="display:flex;gap:.5em;margin-top:.5em">
+      <button class="btn" onclick="saveRecipe()" style="flex:2">Salvar receita</button>
+      <button class="btn" onclick="cancelRecipeForm()" style="flex:1;background:var(--bdr);color:var(--text)">Cancelar</button>
+    </div>
+    <div class="msg" id="recipe-msg"></div>
+  </div>
+</div>
+
 <!-- Balança -->
-<div id="pane-balanca" class="pane active">
+<div id="pane-balanca" class="pane">
   <div class="card">
     <p class="hint">Peso atual: <strong id="wval">--</strong></p>
     <button class="btn" onclick="doTare()">Tarar (zerar)</button>
@@ -276,6 +316,170 @@ function applyDark(d){H.classList.toggle('dark',d);D.getElementById('thm').textC
 function tog(){var d=!H.classList.contains('dark');localStorage.setItem('t',d?'1':'0');applyDark(d)}
 (function(){var s=localStorage.getItem('t');applyDark(s!=null?s==='1':window.matchMedia('(prefers-color-scheme:dark)').matches)})();
 
+// ── Recipes ──────────────────────────────────────────────────────────
+var STEP_TYPES=['Despejo','Flor','Aguardar','Redemoinho','Mexa','Personalizado'];
+var _steps=[];
+
+function fmtTime(s){var m=Math.floor(s/60);return m+':'+(s%60<10?'0':'')+s%60;}
+
+function loadRecipeList(){
+  fetch('/recipes').then(function(r){return r.json()}).then(function(list){
+    var el=D.getElementById('recipe-items');
+    var empty=D.getElementById('recipe-empty');
+    el.innerHTML='';
+    if(!list||!list.length){empty.style.display='block';return}
+    empty.style.display='none';
+    list.forEach(function(r){
+      var div=D.createElement('div');
+      div.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:.5em .2em;border-bottom:1px solid var(--bdr)';
+      var meta='';
+      if(r.waterTotal) meta+='<span style="font-size:.78em;color:var(--sub);margin-right:.5em">'+r.waterTotal+'ml</span>';
+      if(r.totalSecs)  meta+='<span style="font-size:.78em;color:var(--sub);margin-right:.5em">'+fmtTime(r.totalSecs)+'</span>';
+      div.innerHTML='<div><span style="font-size:.95em">'+r.title+'</span><br>'+meta+'</div>'
+        +'<div style="display:flex;gap:.4em">'
+        +'<button onclick="editRecipe('+r.id+')" style="background:none;border:1px solid var(--btn);color:var(--btn);border-radius:5px;padding:.2em .6em;cursor:pointer;font-size:.82em">Editar</button>'
+        +'<button onclick="deleteRecipe('+r.id+',this)" style="background:none;border:1px solid var(--dan);color:var(--dan);border-radius:5px;padding:.2em .6em;cursor:pointer;font-size:.82em">&#128465;</button>'
+        +'</div>';
+      el.appendChild(div);
+    });
+  }).catch(function(){});
+}
+
+function showRecipeForm(recipe){
+  D.getElementById('recipe-list-view').style.display='none';
+  D.getElementById('recipe-form-view').style.display='block';
+  _steps=[];
+  D.getElementById('steps-list').innerHTML='';
+  if(recipe){
+    D.getElementById('recipe-form-title').textContent='Editar Receita';
+    D.getElementById('rf-id').value=recipe.id||0;
+    D.getElementById('rf-title').value=recipe.title||'';
+    D.getElementById('rf-grind').value=recipe.grind||'';
+    D.getElementById('rf-water').value=recipe.waterTotal||'';
+    D.getElementById('rf-coffee').value=recipe.coffee||'';
+    D.getElementById('rf-heat').value=recipe.heat||'';
+    (recipe.steps||[]).forEach(function(s){addStepRow(s)});
+  } else {
+    D.getElementById('recipe-form-title').textContent='Nova Receita';
+    D.getElementById('rf-id').value=0;
+    ['rf-title','rf-grind','rf-water','rf-coffee','rf-heat'].forEach(function(id){D.getElementById(id).value=''});
+  }
+  updateWaterLeft();
+}
+
+function cancelRecipeForm(){
+  D.getElementById('recipe-form-view').style.display='none';
+  D.getElementById('recipe-list-view').style.display='block';
+}
+
+function editRecipe(id){
+  fetch('/recipe?id='+id).then(function(r){return r.json()}).then(function(recipe){
+    showRecipeForm(recipe);
+  }).catch(function(){});
+}
+
+function deleteRecipe(id,btn){
+  if(!confirm('Apagar esta receita?')) return;
+  fetch('/recipe?id='+id+'\x26_method=DELETE',{method:'POST'})
+  .then(function(){loadRecipeList()}).catch(function(){});
+}
+
+function updateWaterLeft(){
+  var total=parseFloat(D.getElementById('rf-water').value)||0;
+  var used=_steps.reduce(function(s,st){return s+(parseFloat(st.water)||0)},0);
+  var left=total-used;
+  D.getElementById('water-left').textContent=left.toFixed(1)+'ml';
+  var totalSecs=_steps.reduce(function(s,st){return s+(parseInt(st.duration)||0)},0);
+  D.getElementById('total-time').textContent=fmtTime(totalSecs);
+}
+
+function addStep(){
+  // Suggest remaining water; zero for Aguardar
+  var total=parseFloat(D.getElementById('rf-water').value)||0;
+  var used=_steps.reduce(function(s,st){return s+(parseFloat(st.water)||0)},0);
+  var left=Math.max(0,total-used);
+  addStepRow({type:'Despejo',water:left>0?left:'',duration:'',detail:''});
+}
+
+function addStepRow(s){
+  var idx=_steps.length;
+  _steps.push(s);
+  var div=D.createElement('div');
+  div.id='step-'+idx;
+  div.style.cssText='border:1px solid var(--bdr);border-radius:7px;padding:.7em;margin:.4em 0;background:var(--bg)';
+  var opts=STEP_TYPES.map(function(t){return'<option'+(t===s.type?' selected':'')+'>'+t+'</option>'}).join('');
+  div.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.4em">'
+    +'<strong style="font-size:.85em">Etapa '+(idx+1)+'</strong>'
+    +'<button onclick="removeStep('+idx+')" style="background:none;border:none;color:var(--dan);cursor:pointer;font-size:1.1em">&#10005;</button></div>'
+    +'<select id="st-type-'+idx+'" onchange="stUpd('+idx+')" style="width:100%;padding:.45em;border:1px solid var(--bdr);border-radius:5px;background:var(--inp);color:var(--text);margin-bottom:.3em">'+opts+'</select>'
+    +'<div style="display:flex;gap:.4em;margin-bottom:.3em">'
+    +'<div style="flex:1"><label style="font-size:.78em;color:var(--sub)">Água (ml)</label>'
+    +'<input id="st-water-'+idx+'" type="number" min="0" value="'+(s.water||'')+'" oninput="stUpd('+idx+');updateWaterLeft()" style="width:100%;padding:.45em;border:1px solid var(--bdr);border-radius:5px;background:var(--inp);color:var(--text)"></div>'
+    +'<div style="flex:1"><label style="font-size:.78em;color:var(--sub)">Duração (s)</label>'
+    +'<input id="st-dur-'+idx+'" type="number" min="0" value="'+(s.duration||'')+'" oninput="stUpd('+idx+')" style="width:100%;padding:.45em;border:1px solid var(--bdr);border-radius:5px;background:var(--inp);color:var(--text)"></div></div>'
+    +'<label style="font-size:.78em;color:var(--sub)">Detalhe</label>'
+    +'<input id="st-detail-'+idx+'" type="text" value="'+(s.detail||'')+'" oninput="stUpd('+idx+')" placeholder="Opcional" style="width:100%;padding:.45em;border:1px solid var(--bdr);border-radius:5px;background:var(--inp);color:var(--text)">';
+  D.getElementById('steps-list').appendChild(div);
+  stUpd(idx);
+  updateWaterLeft();
+}
+
+function stUpd(idx){
+  var type=D.getElementById('st-type-'+idx).value;
+  var waterEl=D.getElementById('st-water-'+idx);
+  if(type==='Aguardar'){waterEl.value='0';waterEl.disabled=true;}
+  else waterEl.disabled=false;
+  _steps[idx]={
+    type:type,
+    water:type==='Aguardar'?0:(parseFloat(waterEl.value)||0),
+    duration:parseInt(D.getElementById('st-dur-'+idx).value)||0,
+    detail:D.getElementById('st-detail-'+idx).value
+  };
+  updateWaterLeft();
+}
+
+function removeStep(idx){
+  _steps.splice(idx,1);
+  // Rebuild all steps
+  var saved=_steps.slice();
+  _steps=[];
+  D.getElementById('steps-list').innerHTML='';
+  saved.forEach(function(s){addStepRow(s)});
+  updateWaterLeft();
+}
+
+function saveRecipe(){
+  var id=parseInt(D.getElementById('rf-id').value)||0;
+  var recipe={
+    id:id||undefined,
+    title:D.getElementById('rf-title').value.trim(),
+    grind:D.getElementById('rf-grind').value.trim(),
+    waterTotal:parseFloat(D.getElementById('rf-water').value)||0,
+    coffee:parseFloat(D.getElementById('rf-coffee').value)||0,
+    heat:parseInt(D.getElementById('rf-heat').value)||0,
+    steps:_steps.map(function(s,i){
+      stUpd(i);return _steps[i];
+    })
+  };
+  if(!recipe.title){D.getElementById('rf-title').focus();return}
+  // Validate all water is used
+  var totalW=recipe.waterTotal;
+  var usedW=recipe.steps.reduce(function(s,st){return s+(parseFloat(st.water)||0)},0);
+  if(totalW>0 && Math.abs(totalW-usedW)>0.5){
+    showMsg('recipe-msg',false,'Agua nao distribuida completamente ('+usedW.toFixed(1)+'ml de '+totalW+'ml usada)');
+    return;
+  }
+  // Store totalSecs in recipe
+  recipe.totalSecs=recipe.steps.reduce(function(s,st){return s+(parseInt(st.duration)||0)},0);
+  fetch('/recipe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(recipe)})
+  .then(function(r){return r.json()}).then(function(){
+    showMsg('recipe-msg',true,'Receita salva!');
+    setTimeout(function(){cancelRecipeForm();loadRecipeList();},1200);
+  }).catch(function(){showMsg('recipe-msg',false,'Erro ao salvar.')});
+}
+
+// Load recipes when tab is opened
+var recipesLoaded=false;
 function showTab(id,btn){
   D.querySelectorAll('.pane').forEach(function(p){p.classList.remove('active')});
   D.querySelectorAll('.tab').forEach(function(b){b.classList.remove('active')});
@@ -283,6 +487,7 @@ function showTab(id,btn){
   btn.classList.add('active');
   localStorage.setItem('tab',id);
   if(id==='wifi' && !wifiLoaded) loadWifi();
+  if(id==='receitas') loadRecipeList();
 }
 // Restore last tab
 (function(){var t=localStorage.getItem('tab');if(t){var btn=D.querySelector('.tab[onclick*="\''+t+'\'"]');if(btn) showTab(t,btn);}})();
@@ -437,6 +642,13 @@ void WebApp::registerRoutes() {
     });
     _server.on("/config/led/preview",      [this]() { handleConfigLedPreview(); });
     _server.on("/config/led/preview/stop", [this]() { handleConfigLedPreviewStop(); });
+    _server.on("/recipes",        [this]() { handleRecipeList(); });
+    _server.on("/recipe",         [this]() {
+        String method = _server.arg("_method");
+        if (method == "DELETE") handleRecipeDelete();
+        else if (!_server.arg("id").isEmpty() && _server.arg("title").isEmpty()) handleRecipeGet();
+        else handleRecipeSave();
+    });
     _routesRegistered = true;
 }
 
@@ -601,6 +813,39 @@ void WebApp::handleConfigReset() {
     _eventBus.publish({events::EventType::WifiCredentialsCleared});
     _pendingRestart = true;
     _restartAt = millis() + 800;
+}
+
+void WebApp::handleRecipeList() {
+    if (!_recipes) { _server.send(200, "application/json", "[]"); return; }
+    String list = _recipes->listRecipes();
+    _server.send(200, "application/json", list.c_str());
+}
+
+void WebApp::handleRecipeGet() {
+    if (!_recipes) { _server.send(404, "text/plain", "not found"); return; }
+    uint16_t id = static_cast<uint16_t>(_server.arg("id").toInt());
+    String json = _recipes->loadRecipe(id);
+    if (json.isEmpty()) _server.send(404, "text/plain", "not found");
+    else                _server.send(200, "application/json", json.c_str());
+}
+
+void WebApp::handleRecipeSave() {
+    if (!_recipes) { _server.send(500, "text/plain", "no storage"); return; }
+    // Body comes as plain JSON via POST
+    String body = _server.arg("plain");
+    if (body.isEmpty()) { _server.send(400, "text/plain", "empty body"); return; }
+    uint16_t id = _recipes->saveRecipe(body.c_str());
+    if (id == 0) { _server.send(500, "text/plain", "save failed"); return; }
+    char buf[32];
+    snprintf(buf, sizeof(buf), "{\"id\":%u}", id);
+    _server.send(200, "application/json", buf);
+}
+
+void WebApp::handleRecipeDelete() {
+    if (!_recipes) { _server.send(500, "text/plain", "no storage"); return; }
+    uint16_t id = static_cast<uint16_t>(_server.arg("id").toInt());
+    if (_recipes->deleteRecipe(id)) _server.send(200, "text/plain", "OK");
+    else                            _server.send(404, "text/plain", "not found");
 }
 
 } // namespace core
