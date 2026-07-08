@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-07-04
+
+### Added
+- Modo de receita ativo no dispositivo: ao selecionar receita, display entra em tela dedicada
+- Tela de receita: etapa atual, tipo, timer crescente total (nunca zera), regressivo da etapa, peso atual e água alvo
+- Disparo automático do timer ao detectar mudança de peso ≥ 1.5g; etapa "Aguardar" inicia imediatamente
+- Avanço automático de etapa ao esgotar o tempo; volta ao modo normal ao concluir todas as etapas
+- Menu com confirmação em dois passos: `[2L]` marca `ok?`, botão 1 cancela, segundo `[2L]` ou clique simples ativa
+- Timer total acumula tempo de todas as etapas (não reseta entre elas)
+- `RecipeManager` carrega receitas do LittleFS ao abrir o menu
+- Clique longo botão 2 cancela receita ativa e volta à tela normal
+- Novos eventos: `RecipeStepStarted`, `RecipeStepTick`, `RecipeStepCompleted`, `RecipeFinished`
+
 ## [1.6.0] - 2026-07-04
 
 ### Added

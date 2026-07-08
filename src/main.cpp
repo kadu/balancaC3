@@ -56,8 +56,8 @@ static core::ButtonManager     buttonManager(button1, button2, eventBus);
 static core::ScaleManager      scaleManager(scale, storage, espClock, eventBus);
 static core::TimerManager      timerManager(espClock, eventBus);
 static core::BuzzerManager     buzzerManager(buzzer, espClock, eventBus);
-static core::RecipeManager     recipeManager(eventBus);
 static core::RecipeStorage     recipeStorage(fileSystem);
+static core::RecipeManager     recipeManager(recipeStorage, espClock, eventBus);
 
 static void i2cScan() {
     Serial.println("[I2C] Scanning...");
@@ -120,6 +120,7 @@ void setup() {
 void loop() {
     app.loop();
     buttonManager.loop();
+    recipeManager.loop();
     buzzerManager.loop();
     timerManager.loop();
     displayManager.loop();

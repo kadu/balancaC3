@@ -39,6 +39,10 @@ enum class EventType : uint8_t {
     RecipeMenuOpen,
     RecipeSelected,
     RecipeCancelled,
+    RecipeStepStarted,
+    RecipeStepTick,
+    RecipeStepCompleted,
+    RecipeFinished,
 };
 
 } // namespace events
