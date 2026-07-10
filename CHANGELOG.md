@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-07-04
+
+### Added
+- LEDs durante receita: barra regressiva azul claro proporcional ao tempo restante da etapa
+- Aguardando peso → todos os LEDs em azul escuro; ao iniciar → muda para azul claro
+- Buzzer: 3 beeps curtos ascendentes quando falta 1 segundo na etapa
+- Buzzer: 3 beeps descendentes (2000→1500→1000Hz) ao finalizar a receita
+- `BuzzerManager`: fila de beeps com frequências independentes por slot
+- `ILedStrip`: cores `lightBlue` e `darkBlue`
+
+### Fixed
+- `EventBus::MAX_HANDLERS` expandido de 64 para 96 — overflow silencioso causava
+  `WeightUpdated` do `RecipeManager` ser descartado, impedindo início da contagem regressiva
+
 ## [1.7.0] - 2026-07-04
 
 ### Added

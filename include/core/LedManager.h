@@ -28,6 +28,7 @@ private:
         OtaError,
         ButtonFlash,
         Preview,
+        RecipeProgress,
         Idle,
     };
 
@@ -53,11 +54,15 @@ private:
     void tickOtaSuccess();
     void tickOtaError();
     void tickButtonFlash();
+    void drawRecipeProgress(uint32_t remaining, uint32_t total);
 
     uint32_t elapsed() const;
 
-    State      _prevState    = State::Idle;
-    hal::Color _flashColor  = hal::Color::white();
+    State      _prevState       = State::Idle;
+    hal::Color _flashColor      = hal::Color::white();
+    uint32_t   _recipeRemaining = 0;
+    uint32_t   _recipeTotal     = 0;
+    bool       _recipeRunning   = false;
 };
 
 } // namespace core
