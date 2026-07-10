@@ -1,4 +1,5 @@
 #include "core/LedManager.h"
+#include "core/RecipeManager.h"
 #include "events/EventType.h"
 #include <cmath>
 
@@ -36,6 +37,11 @@ void LedManager::begin(uint8_t savedBrightness) {
     _eventBus.subscribe(events::EventType::Button2Down,           this);
     _eventBus.subscribe(events::EventType::Button1Pressed,        this);
     _eventBus.subscribe(events::EventType::Button2Pressed,        this);
+    _eventBus.subscribe(events::EventType::RecipeStepStarted,     this);
+    _eventBus.subscribe(events::EventType::RecipeStepTick,        this);
+    _eventBus.subscribe(events::EventType::RecipeStepCompleted,   this);
+    _eventBus.subscribe(events::EventType::RecipeFinished,        this);
+    _eventBus.subscribe(events::EventType::RecipeCancelled,       this);
 }
 
 void LedManager::loop() {
@@ -50,6 +56,7 @@ void LedManager::loop() {
         case State::OtaError:         tickOtaError();         break;
         case State::ButtonFlash:      tickButtonFlash();      break;
         case State::Preview:                                  break;
+        case State::RecipeProgress:                           break;
         case State::Idle:                                     break;
     }
 }
@@ -103,6 +110,39 @@ void LedManager::onEvent(const events::Event& event) {
             // Action already handled by other managers; extinguish flash
             if (_state == State::ButtonFlash) transitionTo(_prevState);
             break;
+        case events::EventType::RecipeStepStarted: {
+            auto* p = static_cast<const RecipeStepPayload*>(event.payload);
+            if (p && p->stepDurationSecs > 0) {
+                _recipeTotal     = p->stepDurationSecs;
+                _recipeRemaining = p->remainingSecs;
+                _recipeRunning   = p->running;
+                transitionTo(State::RecipeProgress);
+            } else {
+                transitionTo(State::Idle);
+            }
+            break;
+        }
+        case events::EventType::RecipeStepTick: {
+            auto* p = static_cast<const RecipeStepPayload*>(event.payload);
+            if (p && _state == State::RecipeProgress) {
+                _recipeRemaining = p->remainingSecs;
+                _recipeRunning   = p->running;
+                _leds.setBrightness(_brightness);
+                if (!_recipeRunning) {
+                    _leds.setAll(hal::Color::darkBlue());
+                } else {
+                    drawRecipeProgress(_recipeRemaining, _recipeTotal);
+                }
+                _leds.show();
+            }
+            break;
+        }
+        case events::EventType::RecipeStepCompleted:
+        case events::EventType::RecipeFinished:
+        case events::EventType::RecipeCancelled:
+            if (_state == State::RecipeProgress) transitionTo(State::Idle);
+            break;
+
         case events::EventType::LedBrightnessChanged:
             if (event.payload) {
                 _brightness = *static_cast<const uint8_t*>(event.payload);
@@ -143,6 +183,15 @@ void LedManager::transitionTo(State next) {
 
     // Immediate frame on entry
     switch (_state) {
+        case State::RecipeProgress:
+            _leds.setBrightness(_brightness);
+            if (!_recipeRunning) {
+                _leds.setAll(hal::Color::darkBlue());
+            } else {
+                drawRecipeProgress(_recipeRemaining, _recipeTotal);
+            }
+            _leds.show();
+            break;
         case State::ButtonFlash:
             _leds.setBrightness(_brightness);
             _leds.setAll(_flashColor);
@@ -261,6 +310,18 @@ void LedManager::tickOtaError() {
     _leds.show();
 
     if (elapsed() >= OTA_ERROR_MS) transitionTo(State::Idle);
+}
+
+// ── Recipe progress — light blue bar draining left to right ─────────────────
+void LedManager::drawRecipeProgress(uint32_t remaining, uint32_t total) {
+    if (total == 0) return;
+    _leds.setBrightness(_brightness);
+    _leds.clear();
+    uint8_t count = _leds.count();
+    // Number of lit LEDs proportional to remaining time
+    uint8_t lit = static_cast<uint8_t>((uint32_t)remaining * count / total);
+    for (uint8_t i = 0; i < lit; ++i) _leds.setOne(i, hal::Color::lightBlue());
+    _leds.show();
 }
 
 // ── Button flash — on while pressed, timeout of 2s as safety fallback ───────
