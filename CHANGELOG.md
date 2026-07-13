@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.9.0] - 2026-07-04
+
+### Added
+- Animação de conclusão de receita no display OLED (28 frames, 80ms/frame, 4s)
+- `coffee_anim.h`: 28 frames PROGMEM convertidos do formato Adafruit para U8g2 MSB-first
+- `IDisplay::drawBitmapMSB()` para bitmaps no formato Adafruit/MSB-first
+- `DisplayManager`: estado `RecipeFinished` com loop de animação não-bloqueante
+- `docs/schematic.svg`: diagrama de ligações vetorial com todos os componentes
+- README: imagem do esquemático e seção de ligações detalhada por componente
+
 ## [1.8.0] - 2026-07-04
 
 ### Added
