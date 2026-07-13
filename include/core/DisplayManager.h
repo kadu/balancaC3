@@ -28,6 +28,7 @@ private:
         Scale,
         RecipeMenu,
         RecipeActive,
+        RecipeFinished,
     };
 
     hal::IDisplay&    _display;
@@ -57,6 +58,11 @@ private:
     bool     _stepRunning     = false;
     uint8_t  _stepIndex       = 0;
     uint8_t  _stepTotal       = 0;
+
+    // Recipe finished animation
+    uint8_t  _animFrame       = 0;
+    uint32_t _animLastMs      = 0;
+    static constexpr uint32_t ANIM_HOLD_MS = 4000; // show animation for 4s then go to Scale
 
     static constexpr uint32_t SPLASH_LOGO_MS      = 3000;
     static constexpr uint32_t SPLASH_CONNECTED_MS = 3000;

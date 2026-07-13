@@ -4,6 +4,7 @@
 #include "core/ScaleManager.h"
 #include "core/TimerManager.h"
 #include "core/RecipeManager.h"
+#include "coffee_anim.h"
 #include "events/EventType.h"
 #include "logo.h"
 #include <cstdio>
@@ -41,6 +42,20 @@ void DisplayManager::begin() {
 
 void DisplayManager::loop() {
     uint32_t now = _clock.millis();
+
+    if (_state == State::RecipeFinished) {
+        if (now - _splashStartMs >= ANIM_HOLD_MS) {
+            transitionTo(State::Scale);
+        } else if (now - _animLastMs >= COFFEE_ANIM_DELAY_MS) {
+            _animLastMs = now;
+            _animFrame  = (_animFrame + 1) % COFFEE_ANIM_FRAMES;
+            _display.clear();
+            _display.drawBitmapMSB(0, 0, COFFEE_ANIM_W, COFFEE_ANIM_H,
+                                   coffee_frames[_animFrame]);
+            _display.show();
+        }
+        return;
+    }
 
     if (_state == State::SplashLogo) {
         if (now - _splashStartMs >= SPLASH_LOGO_MS) {
@@ -124,8 +139,10 @@ void DisplayManager::onEvent(const events::Event& event) {
             drawRecipeMenu(event.payload);
             break;
         case events::EventType::RecipeCancelled:
-        case events::EventType::RecipeFinished:
             transitionTo(State::Scale);
+            break;
+        case events::EventType::RecipeFinished:
+            transitionTo(State::RecipeFinished);
             break;
         case events::EventType::RecipeSelected:
             _state = State::RecipeActive;
@@ -170,6 +187,14 @@ void DisplayManager::transitionTo(State next) {
     _state = next;
 
     switch (_state) {
+        case State::RecipeFinished:
+            _splashStartMs = _clock.millis();
+            _animFrame     = 0;
+            _animLastMs    = _splashStartMs;
+            _display.clear();
+            _display.drawBitmapMSB(0, 0, COFFEE_ANIM_W, COFFEE_ANIM_H, coffee_frames[0]);
+            _display.show();
+            break;
         case State::SplashLogo:
             _splashStartMs = _clock.millis();
             drawSplashLogo();

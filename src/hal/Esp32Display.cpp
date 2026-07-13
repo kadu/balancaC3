@@ -67,9 +67,12 @@ void Esp32Display::drawTriangle(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, 
 }
 
 void Esp32Display::drawBitmap(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) {
-    // U8g2 expects XBM format (LSB first); the image is already MSB (standard bitmap).
-    // Use drawXBMP for standard byte order bitmaps.
     _u8g2.drawXBMP(x, y, w, h, bitmap);
+}
+
+void Esp32Display::drawBitmapMSB(uint8_t x, uint8_t y, uint8_t w, uint8_t h, const uint8_t* bitmap) {
+    // Adafruit-format bitmaps are MSB-first; U8g2 drawBitmap is also MSB-first.
+    _u8g2.drawBitmap(x, y, (w + 7) / 8, h, bitmap);
 }
 
 uint8_t Esp32Display::displayWidth() {

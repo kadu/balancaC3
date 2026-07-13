@@ -72,3 +72,90 @@ O display OLED mostra simultaneamente o timer e o peso, com fontes grandes pensa
 ## Calibração
 
 A balança precisa ser calibrada uma única vez com um peso conhecido (por exemplo, 1kg). Após isso, os dados ficam salvos e o dispositivo lembra a calibração mesmo após desligar. A calibração pode ser refeita a qualquer momento pela interface web.
+
+---
+
+## Ligações
+
+![Diagrama de ligações](docs/schematic.svg)
+
+### ESP32-C3 Super Mini — mapa de pinos
+
+```
+                    ┌─────────────────┐
+                    │  ESP32-C3 Super │
+                    │      Mini       │
+              3.3V ─┤ 3V3         GND ├─ GND
+               GND ─┤ GND         5V  ├─ 5V
+     [Buzzer +] ───┤ GPIO2      GPIO10├─── [Botão 2] ── GND
+                    │  GPIO3     GPIO9 ├─── [Botão 1] ── GND
+                    │  GPIO4     GPIO8 ├─── (LED embutido)
+     [WS2812B] ───┤ GPIO5      GPIO7 ├─── SCL (OLED + NAU7802)
+                    │  GPIO6     GPIO6 ├─── SDA (OLED + NAU7802)
+                    └─────────────────┘
+```
+
+### Componentes e conexões detalhadas
+
+#### Display OLED — SSD1306 128×64 (I2C)
+```
+OLED          ESP32-C3
+────          ────────
+VCC  ───────  3.3V
+GND  ───────  GND
+SDA  ───────  GPIO 6
+SCL  ───────  GPIO 7
+```
+
+#### Sensor de peso — NAU7802 (I2C)
+```
+NAU7802       ESP32-C3
+───────       ────────
+VDD  ───────  3.3V
+GND  ───────  GND
+SDA  ───────  GPIO 6   (compartilha com OLED)
+SCL  ───────  GPIO 7   (compartilha com OLED)
+
+NAU7802       Célula de carga
+───────       ──────────────
+E+   ───────  Excitação +
+E-   ───────  Excitação -
+A+   ───────  Sinal +
+A-   ───────  Sinal -
+```
+
+#### Fita de LEDs — WS2812B (8 LEDs)
+```
+WS2812B       ESP32-C3
+───────       ────────
+VCC  ───────  5V
+GND  ───────  GND
+DIN  ───────  GPIO 5
+```
+> Recomendado: resistor de 300–500Ω em série no DIN e capacitor de 100µF entre VCC e GND.
+
+#### Botões (2×)
+```
+Botão 1:  GPIO 9  ── Botão ── GND   (pull-up interno ativo)
+Botão 2:  GPIO 10 ── Botão ── GND   (pull-up interno ativo)
+```
+
+#### Buzzer passivo
+```
+Buzzer        ESP32-C3
+──────        ────────
++    ───────  GPIO 2
+-    ───────  GND
+```
+> Para buzzer passivo de 5V, adicionar transistor NPN (ex: 2N2222) entre GPIO2 e o buzzer.
+
+### Resumo de pinos
+
+| GPIO | Função | Componente |
+|------|--------|------------|
+| 2 | PWM (buzzer) | Buzzer passivo |
+| 5 | Data | Fita WS2812B |
+| 6 | I2C SDA | OLED + NAU7802 |
+| 7 | I2C SCL | OLED + NAU7802 |
+| 9 | Botão 1 (pull-up) | Botão — Timer |
+| 10 | Botão 2 (pull-up) | Botão — Tara |
