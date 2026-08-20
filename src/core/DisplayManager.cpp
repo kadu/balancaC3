@@ -36,6 +36,7 @@ void DisplayManager::begin() {
     _eventBus.subscribe(events::EventType::RecipeStepTick,       this);
     _eventBus.subscribe(events::EventType::RecipeStepCompleted,  this);
     _eventBus.subscribe(events::EventType::RecipeFinished,       this);
+    _eventBus.subscribe(events::EventType::ScaleNotFound,        this);
 
     transitionTo(State::SplashLogo);
 }
@@ -59,11 +60,15 @@ void DisplayManager::loop() {
 
     if (_state == State::SplashLogo) {
         if (now - _splashStartMs >= SPLASH_LOGO_MS) {
-            // Sync calibration state from ScaleManager before first draw
-            if (_scale) _calibrated = _scale->isCalibrated();
-            // If IP already received during logo, go straight to connected splash
-            if (_ip[0] != '\0') transitionTo(State::SplashConnected);
-            else                transitionTo(State::Connecting);
+            if (_scaleNotFound) {
+                transitionTo(State::ScaleError);
+            } else {
+                // Sync calibration state from ScaleManager before first draw
+                if (_scale) _calibrated = _scale->isCalibrated();
+                // If IP already received during logo, go straight to connected splash
+                if (_ip[0] != '\0') transitionTo(State::SplashConnected);
+                else                transitionTo(State::Connecting);
+            }
         }
         return;
     }
@@ -90,10 +95,12 @@ void DisplayManager::loop() {
 }
 
 void DisplayManager::onEvent(const events::Event& event) {
-    // Hold logo splash — buffer WiFi events until logo finishes
+    // Hold logo splash — buffer events until logo finishes
     if (_state == State::SplashLogo) {
         if (event.type == events::EventType::WifiConnected && event.payload)
             strncpy(_ip, static_cast<const char*>(event.payload), sizeof(_ip) - 1);
+        if (event.type == events::EventType::ScaleNotFound)
+            _scaleNotFound = true;
         return;
     }
 
@@ -143,6 +150,9 @@ void DisplayManager::onEvent(const events::Event& event) {
             break;
         case events::EventType::RecipeFinished:
             transitionTo(State::RecipeFinished);
+            break;
+        case events::EventType::ScaleNotFound:
+            transitionTo(State::ScaleError);
             break;
         case events::EventType::RecipeSelected:
             _state = State::RecipeActive;
@@ -219,6 +229,9 @@ void DisplayManager::transitionTo(State next) {
             break;
         case State::Scale:
             drawScale();
+            break;
+        case State::ScaleError:
+            drawScaleError();
             break;
     }
 }
@@ -414,7 +427,28 @@ void DisplayManager::drawRecipeMenu(const void* payload) {
     _display.show();
 }
 
-// ── Logo splash ──────────────────────────────────────────────────────────────
+// ── Scale sensor error ────────────────────────────────────────────────────────
+//
+//  line  9  │  ! SENSOR !           (small, center)
+//  line 13  ├────────────────────── (hline)
+//  line 32  │  NAU7802              (large, center)
+//  line 44  │  nao encontrado       (small, center)
+//  line 56  │  Verifique I2C        (small, center)
+//
+void DisplayManager::drawScaleError() {
+    _display.clear();
+    _display.setFontSmall();
+    _display.drawStringCenter(9, "! SENSOR !");
+    _display.drawHLine(0, 13, 128);
+    _display.setFontLarge();
+    _display.drawStringCenter(36, "NAU7802");
+    _display.setFontSmall();
+    _display.drawStringCenter(50, "nao encontrado");
+    _display.drawStringCenter(62, "Verifique I2C");
+    _display.show();
+}
+
+// ── Logo splash ───────────────────────────────────────────────────────────────
 void DisplayManager::drawSplashLogo() {
     _display.clear();
     _display.drawBitmap(0, 0, LOGO_WIDTH, LOGO_HEIGHT, logo_bitmap);

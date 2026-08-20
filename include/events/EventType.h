@@ -43,6 +43,7 @@ enum class EventType : uint8_t {
     RecipeStepTick,
     RecipeStepCompleted,
     RecipeFinished,
+    ScaleNotFound,
 };
 
 } // namespace events

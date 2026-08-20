@@ -12,7 +12,10 @@ ScaleManager::ScaleManager(hal::IScale& scale, hal::IStorage& storage,
 
 void ScaleManager::begin() {
     _ready = _scale.begin();
-    if (!_ready) return;
+    if (!_ready) {
+        _eventBus.publish({events::EventType::ScaleNotFound});
+        return;
+    }
     loadCalibration();
     loadFilterConfig();
     if (_calibrated) _eventBus.publish({events::EventType::ScaleCalibrated});
