@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Jingle de inicialização: arpejo ascendente C-Mi-Sol (523→659→784 Hz) tocado durante o logo de boot
+- `SystemReady` publicado ao fim do `setup()` em `main.cpp`
+- `BuzzerManager` subscreve `SystemReady` e dispara a sequência de boas-vindas
+
+### Added
 - Tela de erro permanente no display quando sensor NAU7802 não é encontrado no boot
 - Evento `ScaleNotFound` publicado por `ScaleManager::begin()` em caso de falha de inicialização
 - `DisplayManager`: estado `ScaleError` exibe "NAU7802 / nao encontrado / Verifique I2C"

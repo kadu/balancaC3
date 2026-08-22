@@ -10,6 +10,7 @@ BuzzerManager::BuzzerManager(hal::IBuzzer& buzzer, hal::IClock& clock, events::E
 
 void BuzzerManager::begin() {
     _buzzer.begin();
+    _eventBus.subscribe(events::EventType::SystemReady,    this);
     _eventBus.subscribe(events::EventType::Button1Down,    this);
     _eventBus.subscribe(events::EventType::Button2Down,    this);
     _eventBus.subscribe(events::EventType::RecipeStepTick, this);
@@ -44,6 +45,14 @@ void BuzzerManager::loop() {
 
 void BuzzerManager::onEvent(const events::Event& event) {
     switch (event.type) {
+        case events::EventType::SystemReady: {
+            // Startup jingle: ascending C-E-G arpeggio (do-mi-sol)
+            static const uint32_t freqs[] = {523, 659, 784};
+            static const uint32_t durs[]  = { 80,  80, 150};
+            scheduleSequence(freqs, durs, 3, 50);
+            break;
+        }
+
         case events::EventType::Button1Down:
         case events::EventType::Button2Down:
             scheduleBeeps(1, BUZZER_FREQ_HZ, BUZZER_BEEP_MS, 0);
