@@ -115,6 +115,8 @@ void setup() {
     wifiManager.begin();
     webApp.begin();
     otaManager.begin();
+
+    eventBus.publish({events::EventType::SystemReady});
 }
 
 void loop() {
