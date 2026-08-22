@@ -29,6 +29,7 @@ private:
         RecipeMenu,
         RecipeActive,
         RecipeFinished,
+        ScaleError,
     };
 
     hal::IDisplay&    _display;
@@ -45,6 +46,7 @@ private:
     float    _lastWeight  = 0.0f;
     bool     _calibrated  = false;
     char     _ip[16]      = {};
+    bool     _scaleNotFound = false;
     uint16_t _timerMin     = 0;
     uint8_t  _timerSec     = 0;
     bool     _timerRunning = false;
@@ -77,6 +79,7 @@ private:
     void drawSplashAp();
     void drawRecipeMenu(const void* payload);
     void drawRecipeActive();
+    void drawScaleError();
 };
 
 } // namespace core
