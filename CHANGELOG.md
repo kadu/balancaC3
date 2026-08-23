@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- `PIN_BUTTON_1` movido de GPIO 9 para GPIO 3
+- `PIN_BUTTON_2` movido de GPIO 10 para GPIO 1
+- `docs/schematic.svg` atualizado com novos pinos dos botões
+- `README.md` atualizado com pinos corretos e manual de uso completo (timer, receitas, exemplos V60)
+
 ### Added
 - Jingle de inicialização: arpejo ascendente C-Mi-Sol (523→659→784 Hz) tocado durante o logo de boot
 - `SystemReady` publicado ao fim do `setup()` em `main.cpp`

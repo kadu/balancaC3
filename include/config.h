@@ -28,8 +28,8 @@ static constexpr uint8_t  LED_BRIGHTNESS_DEFAULT  = 128;
 static constexpr char STORAGE_KEY_LED_BRIGHTNESS[] = "led_bright";
 
 // Buttons
-static constexpr uint8_t PIN_BUTTON_1 = 9;
-static constexpr uint8_t PIN_BUTTON_2 = 10;
+static constexpr uint8_t PIN_BUTTON_1 = 3;
+static constexpr uint8_t PIN_BUTTON_2 = 1;
 
 // NAU7802 Scale
 static constexpr float   SCALE_CAPACITY_KG        = 20.0f;
