@@ -30,6 +30,16 @@ h1{margin:.4em 0;font-size:1.4em}
 p{color:var(--sub);margin:.3em 0}
 a.btn{display:inline-block;margin-top:.8em;padding:.6em 1.4em;background:var(--btn);color:#fff;border-radius:6px;text-decoration:none;font-size:.95em}
 a.btn:active{background:var(--bh)}
+.btns{display:flex;gap:.8em}
+.btns>div{flex:1}
+.pb{width:100%;padding:1em .3em;background:var(--card);color:var(--text);border:2px solid var(--btn);border-radius:10px;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;gap:.15em;align-items:center;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;transition:background .08s,transform .08s,border-color .08s}
+.pb.hold{background:var(--btn);color:#fff;transform:scale(.97)}
+.pb.long{background:var(--warn);border-color:var(--warn);color:#fff}
+.pb.flash{animation:fl .45s ease-out}
+@keyframes fl{0%{background:var(--btn);border-color:var(--btn);color:#fff;transform:scale(.93)}100%{background:var(--card);border-color:var(--btn);color:var(--text);transform:scale(1)}}
+.pbn{font-size:1.02em;font-weight:bold}
+.pbl{font-size:.74em;opacity:.75}
+.hint{font-size:.7em;color:var(--sub);margin-top:.45em;line-height:1.4}
 </style></head><body>
 <div class="hdr"><h1>BalancaC3</h1><div style="display:flex;align-items:center;gap:.5em"><a href="/config" style="display:flex;align-items:center;gap:.3em;color:var(--text);text-decoration:none;font-size:.88em;border:1px solid var(--sub);border-radius:20px;padding:.3em .75em"><span style="font-size:1.1em">&#9881;</span>Configurações</a><button class="thm" id="thm" onclick="tog()"></button></div></div>
 <div class="card">
@@ -42,13 +52,33 @@ a.btn:active{background:var(--bh)}
   <div style="margin-top:.8em"><button onclick="doTare()" style="padding:.6em 1.6em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-size:.95em;cursor:pointer">Tarar</button></div>
   <div id="tare-msg" style="font-size:.82em;color:var(--sub);margin-top:.4em;min-height:1.2em"></div>
 </div>
+<div class="card">
+  <div style="font-size:.8em;color:var(--sub);margin-bottom:.7em">Controles — toque rapido ou segure</div>
+  <div class="btns">
+    <div>
+      <button class="pb" id="pb1"><span class="pbn">Botão 1</span><span class="pbl">Timer</span></button>
+      <div class="hint">toque: iniciar/pausar<br>segurar: zerar</div>
+    </div>
+    <div>
+      <button class="pb" id="pb2"><span class="pbn">Botão 2</span><span class="pbl">Tara</span></button>
+      <div class="hint">toque: tarar<br>segurar: receitas</div>
+    </div>
+  </div>
+</div>
 <script>
 var H=document.documentElement,D=document;
 function applyDark(d){H.classList.toggle('dark',d);D.getElementById('thm').textContent=d?'Claro':'Escuro'}
 function tog(){var d=!H.classList.contains('dark');localStorage.setItem('t',d?'1':'0');applyDark(d)}
 (function(){var s=localStorage.getItem('t');applyDark(s!=null?s==='1':window.matchMedia('(prefers-color-scheme:dark)').matches)})();
+var prevBtn=null;
+function flash(id){var e=D.getElementById(id);e.classList.remove('flash');void e.offsetWidth;e.classList.add('flash')}
 (function poll(){
   fetch('/scale/weight').then(function(r){return r.json()}).then(function(d){
+    if(prevBtn){
+      if(d.b1c!==prevBtn.b1c||d.b1l!==prevBtn.b1l)flash('pb1');
+      if(d.b2c!==prevBtn.b2c||d.b2l!==prevBtn.b2l)flash('pb2');
+    }
+    prevBtn={b1c:d.b1c,b1l:d.b1l,b2c:d.b2c,b2l:d.b2l};
     var dot=D.getElementById('dot'),st=D.getElementById('sensor-status');
     var wv=D.getElementById('weight-val'),wu=D.getElementById('weight-unit');
     var rv=D.getElementById('raw-val'),cw=D.getElementById('cal-warn');
@@ -73,6 +103,26 @@ function doTare(){
     var m=D.getElementById('tare-msg');m.textContent='Tarado!';setTimeout(function(){m.textContent=''},2000);
   }).catch(function(){D.getElementById('tare-msg').textContent='Erro ao tarar.'});
 }
+var LONG_MS=700,hold={};
+[1,2].forEach(function(n){
+  var e=D.getElementById('pb'+n);
+  e.addEventListener('contextmenu',function(ev){ev.preventDefault()});
+  e.addEventListener('pointerdown',function(ev){
+    ev.preventDefault();
+    if(e.setPointerCapture)e.setPointerCapture(ev.pointerId);
+    e.classList.remove('flash');e.classList.add('hold');
+    hold[n]={lg:false,t:setTimeout(function(){if(hold[n]){hold[n].lg=true;e.classList.add('long')}},LONG_MS)};
+  });
+  e.addEventListener('pointerup',function(){
+    var h=hold[n];if(!h)return;hold[n]=null;clearTimeout(h.t);
+    e.classList.remove('hold','long');
+    fetch('/button?n='+n+'&a='+(h.lg?'long':'click')).catch(function(){});
+  });
+  e.addEventListener('pointercancel',function(){
+    var h=hold[n];if(!h)return;hold[n]=null;clearTimeout(h.t);
+    e.classList.remove('hold','long');
+  });
+});
 </script></body></html>
 )html";
 
@@ -594,6 +644,10 @@ void WebApp::begin() {
     _eventBus.subscribe(events::EventType::WifiConnected,      this);
     _eventBus.subscribe(events::EventType::WifiConfigRequired, this);
     _eventBus.subscribe(events::EventType::WifiDisconnected,   this);
+    _eventBus.subscribe(events::EventType::Button1Pressed,     this);
+    _eventBus.subscribe(events::EventType::Button1LongPressed, this);
+    _eventBus.subscribe(events::EventType::Button2Pressed,     this);
+    _eventBus.subscribe(events::EventType::Button2LongPressed, this);
 }
 
 void WebApp::loop() {
@@ -614,6 +668,12 @@ void WebApp::onEvent(const events::Event& event) {
         case events::EventType::WifiDisconnected:
             stopServer();
             break;
+        // Mirror physical button activity to the web UI. Fires for web-originated
+        // presses too, so both sources give identical on-screen feedback.
+        case events::EventType::Button1Pressed:     ++_b1Clicks; break;
+        case events::EventType::Button1LongPressed: ++_b1Longs;  break;
+        case events::EventType::Button2Pressed:     ++_b2Clicks; break;
+        case events::EventType::Button2LongPressed: ++_b2Longs;  break;
         default:
             break;
     }
@@ -627,6 +687,7 @@ void WebApp::registerRoutes() {
     _server.on("/config/restart", [this]() { handleConfigRestart(); });
     _server.on("/config/reset",   [this]() { handleConfigReset(); });
     _server.on("/config/ssid",    [this]() { handleCurrentSsid(); });
+    _server.on("/button",         [this]() { handleButtonAction(); });
     _server.on("/scale/weight",   [this]() { handleScaleWeight(); });
     _server.on("/scale/tare",     [this]() { handleScaleTare(); });
     _server.on("/scale/calibrate",[this]() { handleScaleCalibrateStep2(); });
@@ -739,12 +800,14 @@ void WebApp::handleScaleWeight() {
     int32_t raw        = _scale ? _scale->lastRaw()      : 0;
     bool    calibrated = _scale ? _scale->isCalibrated() : false;
     bool    ready      = _scale ? _scale->isReady()      : false;
-    char    buf[96];
+    char    buf[192];
     snprintf(buf, sizeof(buf),
-             "{\"grams\":%.2f,\"raw\":%ld,\"calibrated\":%s,\"ready\":%s}",
+             "{\"grams\":%.2f,\"raw\":%ld,\"calibrated\":%s,\"ready\":%s,"
+             "\"b1c\":%u,\"b1l\":%u,\"b2c\":%u,\"b2l\":%u}",
              grams, (long)raw,
              calibrated ? "true" : "false",
-             ready      ? "true" : "false");
+             ready      ? "true" : "false",
+             _b1Clicks, _b1Longs, _b2Clicks, _b2Longs);
     _server.send(200, "application/json", buf);
 }
 
@@ -839,6 +902,31 @@ void WebApp::handleRecipeSave() {
     char buf[32];
     snprintf(buf, sizeof(buf), "{\"id\":%u}", id);
     _server.send(200, "application/json", buf);
+}
+
+// Emit the same event pair a physical button produces: Down gives the LED flash
+// and buzzer feedback, then Pressed/LongPressed triggers the actual action.
+void WebApp::handleButtonAction() {
+    String n = _server.arg("n");
+    String a = _server.arg("a");
+
+    bool isLong = (a == "long");
+    if (!isLong && a != "click") { _server.send(400, "text/plain", "bad action"); return; }
+
+    if (n == "1") {
+        _eventBus.publish({events::EventType::Button1Down});
+        _eventBus.publish({isLong ? events::EventType::Button1LongPressed
+                                  : events::EventType::Button1Pressed});
+    } else if (n == "2") {
+        _eventBus.publish({events::EventType::Button2Down});
+        _eventBus.publish({isLong ? events::EventType::Button2LongPressed
+                                  : events::EventType::Button2Pressed});
+    } else {
+        _server.send(400, "text/plain", "bad button");
+        return;
+    }
+
+    _server.send(200, "text/plain", "OK");
 }
 
 void WebApp::handleRecipeDelete() {

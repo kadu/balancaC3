@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Espelhamento bidirecional dos botões na interface web: card "Controles" com Botão 1 e Botão 2
+- Endpoint `GET /button?n=<1|2>&a=<click|long>` publica `Button<N>Down` + `Button<N>Pressed`/`LongPressed`
+- `WebApp` subscreve os eventos de botão e expõe contadores `b1c/b1l/b2c/b2l` em `/scale/weight`
+- Botões da web usam pressionar-e-segurar com limiar de 700ms, igual ao gesto físico
+
 ### Changed
 - `PIN_BUTTON_1` movido de GPIO 9 para GPIO 3
 - `PIN_BUTTON_2` movido de GPIO 10 para GPIO 1
