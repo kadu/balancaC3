@@ -39,6 +39,14 @@ private:
     bool              _pendingRestart   = false;
     uint32_t          _restartAt        = 0;
 
+    // Button activity counters — the web UI polls these and pulses the on-screen
+    // button whenever a counter advances. Counters (not booleans) so a press is
+    // never missed between two polls.
+    uint16_t          _b1Clicks         = 0;
+    uint16_t          _b1Longs          = 0;
+    uint16_t          _b2Clicks         = 0;
+    uint16_t          _b2Longs          = 0;
+
     void startServer(const char* ip);
     void stopServer();
     void registerRoutes();
@@ -64,6 +72,7 @@ private:
     void handleRecipeGet();
     void handleRecipeSave();
     void handleRecipeDelete();
+    void handleButtonAction();
 };
 
 } // namespace core
