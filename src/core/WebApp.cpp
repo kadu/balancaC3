@@ -1,6 +1,7 @@
 #include "core/WebApp.h"
 #include "core/ScaleManager.h"
 #include "core/RecipeStorage.h"
+#include "core/TimerManager.h"
 #include "events/EventType.h"
 #include "config.h"
 #include <Arduino.h>
@@ -22,6 +23,10 @@ h1{margin:.4em 0;font-size:1.4em}
 .thm{background:none;border:1px solid var(--sub);border-radius:20px;padding:.3em .85em;cursor:pointer;color:var(--text);font-size:.82em}
 .card{background:var(--card);border-radius:10px;padding:1.2em;margin:.8em 0;box-shadow:0 1px 4px rgba(0,0,0,.1);text-align:center}
 .weight{font-size:3em;font-weight:bold;letter-spacing:-.02em;margin:.1em 0;line-height:1}
+.timer{font-size:1.9em;font-weight:bold;color:var(--sub);margin:.05em 0 .35em;line-height:1;transition:color .2s}
+.timer.run{color:var(--btn)}
+.tico{font-size:.6em;margin-right:.3em;vertical-align:.1em}
+.tsep{height:1px;background:var(--bdr);margin:0 0 .5em}
 .unit{font-size:.4em;font-weight:normal;color:var(--sub);margin-left:.15em}
 .raw{font-size:.8em;color:var(--sub);margin:.2em 0}
 .warn{background:var(--warnbg);color:var(--warn);border-radius:6px;padding:.5em .8em;font-size:.85em;margin:.5em 0}
@@ -46,6 +51,8 @@ a.btn:active{background:var(--bh)}
   <div style="font-size:.8em;color:var(--sub);margin-bottom:.4em">
     <span class="dot" id="dot"></span><span id="sensor-status">aguardando...</span>
   </div>
+  <div class="timer" id="timer"><span class="tico" id="tico">&#9208;</span><span id="tval">0:00</span></div>
+  <div class="tsep"></div>
   <div class="weight" id="weight-val">--<span class="unit" id="weight-unit">g</span></div>
   <div class="raw" id="raw-val"></div>
   <div class="warn" id="cal-warn" style="display:none">Sensor sem calibracao — valore raw apenas. Acesse Configurações para calibrar.</div>
@@ -79,6 +86,10 @@ function flash(id){var e=D.getElementById(id);e.classList.remove('flash');void e
       if(d.b2c!==prevBtn.b2c||d.b2l!==prevBtn.b2l)flash('pb2');
     }
     prevBtn={b1c:d.b1c,b1l:d.b1l,b2c:d.b2c,b2l:d.b2l};
+    var ts=d.tsec|0,tm=(ts/60)|0,tsx=ts%60;
+    D.getElementById('tval').textContent=tm+':'+(tsx<10?'0':'')+tsx;
+    D.getElementById('tico').innerHTML=d.trun?'&#9654;':'&#9208;';
+    D.getElementById('timer').classList.toggle('run',!!d.trun);
     var dot=D.getElementById('dot'),st=D.getElementById('sensor-status');
     var wv=D.getElementById('weight-val'),wu=D.getElementById('weight-unit');
     var rv=D.getElementById('raw-val'),cw=D.getElementById('cal-warn');
@@ -800,14 +811,18 @@ void WebApp::handleScaleWeight() {
     int32_t raw        = _scale ? _scale->lastRaw()      : 0;
     bool    calibrated = _scale ? _scale->isCalibrated() : false;
     bool    ready      = _scale ? _scale->isReady()      : false;
-    char    buf[192];
+    uint32_t tsec      = _timer ? _timer->elapsedSeconds() : 0;
+    bool     trun      = _timer ? _timer->isRunning()      : false;
+    char    buf[224];
     snprintf(buf, sizeof(buf),
              "{\"grams\":%.2f,\"raw\":%ld,\"calibrated\":%s,\"ready\":%s,"
-             "\"b1c\":%u,\"b1l\":%u,\"b2c\":%u,\"b2l\":%u}",
+             "\"b1c\":%u,\"b1l\":%u,\"b2c\":%u,\"b2l\":%u,"
+             "\"tsec\":%lu,\"trun\":%s}",
              grams, (long)raw,
              calibrated ? "true" : "false",
              ready      ? "true" : "false",
-             _b1Clicks, _b1Longs, _b2Clicks, _b2Longs);
+             _b1Clicks, _b1Longs, _b2Clicks, _b2Longs,
+             (unsigned long)tsec, trun ? "true" : "false");
     _server.send(200, "application/json", buf);
 }
 

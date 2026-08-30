@@ -108,6 +108,7 @@ void setup() {
 
     webApp.setScaleManager(&scaleManager);
     webApp.setRecipeStorage(&recipeStorage);
+    webApp.setTimerManager(&timerManager);
     displayManager.setScaleManager(&scaleManager);
     timerManager.begin();
     buzzerManager.begin();

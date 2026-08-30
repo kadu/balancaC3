@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Timer exibido na interface web com ícone ▶/⏸, espelhando o layout do display OLED
+- `TimerManager::elapsedSeconds()` e `isRunning()` para consulta read-only do estado do timer
+- `WebApp` recebe `TimerManager` via `setTimerManager()` e expõe `tsec`/`trun` em `/scale/weight`
+
+### Added
 - Espelhamento bidirecional dos botões na interface web: card "Controles" com Botão 1 e Botão 2
 - Endpoint `GET /button?n=<1|2>&a=<click|long>` publica `Button<N>Down` + `Button<N>Pressed`/`LongPressed`
 - `WebApp` subscreve os eventos de botão e expõe contadores `b1c/b1l/b2c/b2l` em `/scale/weight`

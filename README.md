@@ -47,8 +47,10 @@ BalancaC3 é um dispositivo embarcado que combina balança de precisão, timer e
 
 ### Interface web
 - Acesse pelo IP do dispositivo no browser
-- Veja o peso e o timer em tempo real
+- Veja o peso e o timer em tempo real, com o mesmo ícone ▶/⏸ do display
 - Tare diretamente pela interface
+- Controle os dois botões pela tela — toque rápido ou segurar, exatamente como nos botões físicos
+- Os botões da tela piscam quando os botões físicos são pressionados
 - Gerencie receitas (criar, editar, excluir)
 - Sem necessidade de aplicativo
 
