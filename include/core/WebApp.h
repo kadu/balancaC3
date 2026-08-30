@@ -12,6 +12,7 @@ namespace core {
 // Forward declarations to avoid circular include
 class ScaleManager;
 class RecipeStorage;
+class TimerManager;
 
 class WebApp final : public events::IEventHandler {
 public:
@@ -20,6 +21,7 @@ public:
 
     void setScaleManager(ScaleManager* scale)     { _scale   = scale;   }
     void setRecipeStorage(RecipeStorage* storage) { _recipes = storage; }
+    void setTimerManager(TimerManager* timer)     { _timer   = timer;   }
 
     void begin();
     void loop();
@@ -34,6 +36,7 @@ private:
     events::EventBus& _eventBus;
     ScaleManager*     _scale          = nullptr;
     RecipeStorage*    _recipes        = nullptr;
+    TimerManager*     _timer          = nullptr;
     bool              _running          = false;
     bool              _routesRegistered = false;
     bool              _pendingRestart   = false;

@@ -20,6 +20,11 @@ public:
 
     void onEvent(const events::Event& event) override;
 
+    // Read-only accessors so other components (e.g. the web UI) can show the
+    // timer without having to mirror TimerTick events.
+    uint32_t elapsedSeconds() const { return elapsedMs() / 1000; }
+    bool     isRunning()      const { return _state == State::Running; }
+
 private:
     enum class State : uint8_t { Stopped, Running, Paused };
 
