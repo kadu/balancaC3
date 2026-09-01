@@ -9,15 +9,21 @@
 
 namespace core {
 
-// Forward declaration to avoid circular include
+// Forward declarations to avoid circular include
 class ScaleManager;
+class RecipeStorage;
+class TimerManager;
+class RecipeManager;
 
 class WebApp final : public events::IEventHandler {
 public:
     WebApp(hal::IWebServer& server, hal::IWifi& wifi, hal::IStorage& storage,
            hal::IDevice& device, events::EventBus& eventBus);
 
-    void setScaleManager(ScaleManager* scale) { _scale = scale; }
+    void setScaleManager(ScaleManager* scale)     { _scale   = scale;   }
+    void setRecipeStorage(RecipeStorage* storage) { _recipes = storage; }
+    void setTimerManager(TimerManager* timer)     { _timer   = timer;   }
+    void setRecipeManager(RecipeManager* recipe)  { _recipeMgr = recipe; }
 
     void begin();
     void loop();
@@ -31,15 +37,27 @@ private:
     hal::IDevice&     _device;
     events::EventBus& _eventBus;
     ScaleManager*     _scale          = nullptr;
+    RecipeStorage*    _recipes        = nullptr;
+    TimerManager*     _timer          = nullptr;
+    RecipeManager*    _recipeMgr      = nullptr;
     bool              _running          = false;
     bool              _routesRegistered = false;
     bool              _pendingRestart   = false;
     uint32_t          _restartAt        = 0;
 
+    // Button activity counters — the web UI polls these and pulses the on-screen
+    // button whenever a counter advances. Counters (not booleans) so a press is
+    // never missed between two polls.
+    uint16_t          _b1Clicks         = 0;
+    uint16_t          _b1Longs          = 0;
+    uint16_t          _b2Clicks         = 0;
+    uint16_t          _b2Longs          = 0;
+
     void startServer(const char* ip);
     void stopServer();
     void registerRoutes();
 
+    void handleBuildInfo();
     void handleRoot();
     void handleConfig();
     void handleConfigWifi();
@@ -55,6 +73,14 @@ private:
     void handleScaleTare();
     void handleScaleCalibrateStep1();
     void handleScaleCalibrateStep2();
+    void handleScaleFilterGet();
+    void handleScaleFilterSet();
+    void handleRecipeList();
+    void handleRecipeGet();
+    void handleRecipeSave();
+    void handleRecipeDelete();
+    void handleRecipeStart();
+    void handleButtonAction();
 };
 
 } // namespace core

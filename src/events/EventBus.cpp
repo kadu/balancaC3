@@ -5,8 +5,8 @@ namespace events {
 
 void EventBus::subscribe(EventType type, IEventHandler* handler) {
     if (_subscriptionCount >= MAX_HANDLERS) {
-        Serial.printf("[EventBus] OVERFLOW: MAX_HANDLERS=%u reached, subscription dropped!\n",
-                      MAX_HANDLERS);
+        Serial.printf("[EventBus] OVERFLOW: MAX_HANDLERS=%u reached — subscription dropped! Increase MAX_HANDLERS.\n",
+                      (unsigned)MAX_HANDLERS);
         return;
     }
     _subscriptions[_subscriptionCount++] = {type, handler};

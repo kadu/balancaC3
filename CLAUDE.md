@@ -12,7 +12,14 @@ ESP32-C3 Super Mini firmware using PlatformIO + Arduino framework. Target: `esp3
 # Build
 pio run -e esp32-c3-devkitm-1
 
-# Upload
+# Upload — SEMPRE por rede (a placa normalmente não está no USB)
+PLATFORMIO_UPLOAD_PROTOCOL=espota PLATFORMIO_UPLOAD_PORT=balancac3.local \
+  pio run -e esp32-c3-devkitm-1 --target upload
+
+# Confere o que ficou gravado (deve bater com include/build_info.h)
+curl -s http://balancac3.local/build
+
+# Upload por serial — só quando a placa estiver plugada via USB
 pio run -e esp32-c3-devkitm-1 --target upload
 
 # Monitor serial (115200 baud)
@@ -84,7 +91,7 @@ Each feature follows this exact sequence — **no exceptions**:
 
 1. **Branch**: `git checkout develop && git checkout -b feature/<name>`
 2. **Implement**: write code following the architecture rules above
-3. **Build + Upload**: run `pio run -e esp32-c3-devkitm-1 --target upload` — must succeed before proceeding. If no device is connected, run build-only (`pio run -e esp32-c3-devkitm-1`) and note the device was absent.
+3. **Build + Upload**: build, then upload **over the network** (see Commands — `PLATFORMIO_UPLOAD_PROTOCOL=espota`). Must succeed before proceeding. Do not fall back to serial unless the board is actually on USB (`/dev/ttyACM*` or `/dev/ttyUSB*` — `/dev/ttyS0` is the motherboard's port, not the ESP32). If the device is unreachable on the network, run build-only and note it.
 4. **Notify**: inform the user that build+upload succeeded and the firmware is ready to test. **Wait for explicit approval to commit.**
 5. **Commit** (only after approval):
    - Update `CHANGELOG.md` under `[Unreleased]` with a concise entry

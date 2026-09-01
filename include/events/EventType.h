@@ -35,6 +35,15 @@ enum class EventType : uint8_t {
     LedPreviewStopped,
     Button1Down,
     Button2Down,
+    Button2LongPressed,
+    RecipeMenuOpen,
+    RecipeSelected,
+    RecipeCancelled,
+    RecipeStepStarted,
+    RecipeStepTick,
+    RecipeStepCompleted,
+    RecipeFinished,
+    ScaleNotFound,
 };
 
 } // namespace events

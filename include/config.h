@@ -1,5 +1,9 @@
 #pragma once
 
+// Versao do firmware — subir ao lancar release (ver CHANGELOG.md).
+// A data/hora do build e o hash do git vem de build_info.h, gerado a cada build.
+static constexpr char FIRMWARE_VERSION[] = "1.10.0";
+
 // Serial
 static constexpr uint32_t SERIAL_BAUD_RATE = 115200;
 
@@ -28,8 +32,8 @@ static constexpr uint8_t  LED_BRIGHTNESS_DEFAULT  = 128;
 static constexpr char STORAGE_KEY_LED_BRIGHTNESS[] = "led_bright";
 
 // Buttons
-static constexpr uint8_t PIN_BUTTON_1 = 9;
-static constexpr uint8_t PIN_BUTTON_2 = 10;
+static constexpr uint8_t PIN_BUTTON_1 = 3;
+static constexpr uint8_t PIN_BUTTON_2 = 1;
 
 // NAU7802 Scale
 static constexpr float   SCALE_CAPACITY_KG        = 20.0f;
@@ -48,3 +52,9 @@ static constexpr char STORAGE_KEY_SCALE_FACTOR[] = "scale_factor";
 static constexpr uint8_t  PIN_BUZZER          = 2;
 static constexpr uint32_t BUZZER_FREQ_HZ      = 2000;
 static constexpr uint32_t BUZZER_BEEP_MS      = 30;
+
+// NVS storage keys (Scale filter)
+static constexpr char STORAGE_KEY_SCALE_EMA[]      = "scale_ema";
+static constexpr char STORAGE_KEY_SCALE_DEADBAND[] = "scale_dead";
+static constexpr char STORAGE_KEY_SCALE_SNAP[]     = "scale_snap";
+static constexpr char STORAGE_KEY_SCALE_SAMPLES[]  = "scale_samp";

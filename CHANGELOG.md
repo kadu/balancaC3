@@ -7,6 +7,158 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-08-31
+
+A interface web deixa de ser só um mostrador de peso: timer, botões e receitas
+passo a passo funcionam pelo navegador, dirigindo a mesma máquina de estados do
+dispositivo.
+
+### Added
+- Seleção de receita pela interface web, com a lista completa de passos: passo atual destacado com barra de progresso, decorrido e restante; passos anteriores riscados e próximos visíveis
+- Alvo de água acumulado por passo e barra em espera quando o passo aguarda o gatilho de peso
+- `RecipeManager::startRecipe()` / `cancelRecipe()` e acessores read-only do estado ativo
+- Endpoint `GET /recipe/start?id=<n>` (id=0 encerra) — mesma máquina de estados do menu físico
+- Estado da receita (`rid`, `rstep`, `rn`, `rel`, `rrem`, `rtot`, `rrun`) em `/scale/weight`
+- Timer exibido na interface web com ícone ▶/⏸, espelhando o layout do display OLED
+- `TimerManager::elapsedSeconds()` e `isRunning()` para consulta read-only do estado do timer
+- `WebApp` recebe `TimerManager` via `setTimerManager()` e expõe `tsec`/`trun` em `/scale/weight`
+- Espelhamento bidirecional dos botões na interface web: card "Controles" com Botão 1 e Botão 2
+- Endpoint `GET /button?n=<1|2>&a=<click|long>` publica `Button<N>Down` + `Button<N>Pressed`/`LongPressed`
+- `WebApp` subscreve os eventos de botão e expõe contadores `b1c/b1l/b2c/b2l` em `/scale/weight`
+- Botões da web usam pressionar-e-segurar com limiar de 700ms, igual ao gesto físico
+- Rodapé com versão, data/hora do build e hash do git nas páginas principal e de configuração
+- Endpoint `GET /build` e `scripts/build_info.py`, que regera `include/build_info.h` a cada build
+- `FIRMWARE_VERSION` em `config.h`
+- Jingle de inicialização: arpejo ascendente C-Mi-Sol (523→659→784 Hz) tocado durante o logo de boot
+- `SystemReady` publicado ao fim do `setup()` em `main.cpp`; `BuzzerManager` subscreve e toca a sequência de boas-vindas
+- Tela de erro permanente no display quando o sensor NAU7802 não é encontrado no boot
+- Evento `ScaleNotFound` publicado por `ScaleManager::begin()` em caso de falha de inicialização
+- `DisplayManager`: estado `ScaleError` exibe "NAU7802 / nao encontrado / Verifique I2C"
+
+### Changed
+- `PIN_BUTTON_1` movido de GPIO 9 para GPIO 3
+- `PIN_BUTTON_2` movido de GPIO 10 para GPIO 1
+- `docs/schematic.svg` atualizado com novos pinos dos botões
+- `README.md` atualizado com pinos corretos e manual de uso completo (timer, receitas, exemplos V60)
+- Cancelamento de receita centralizado em `cancelRecipe()`, antes duplicado em quatro pontos
+- `CLAUDE.md`: upload passa a ser por rede (espota) por padrão; serial só com a placa no USB
+
+### Fixed
+- OTA pela página web nunca gravava o firmware: `GET /update` era registrado como `HTTP_ANY` antes do handler de upload, então o POST caía nele, os bytes eram descartados e o browser recebia 200 com falso sucesso. Handler de upload passou a ser registrado primeiro
+
+## [1.9.0] - 2026-07-04
+
+### Added
+- Animação de conclusão de receita no display OLED (28 frames, 80ms/frame, 4s)
+- `coffee_anim.h`: 28 frames PROGMEM convertidos do formato Adafruit para U8g2 MSB-first
+- `IDisplay::drawBitmapMSB()` para bitmaps no formato Adafruit/MSB-first
+- `DisplayManager`: estado `RecipeFinished` com loop de animação não-bloqueante
+- `docs/schematic.svg`: diagrama de ligações vetorial com todos os componentes
+- README: imagem do esquemático e seção de ligações detalhada por componente
+
+## [1.8.0] - 2026-07-04
+
+### Added
+- LEDs durante receita: barra regressiva azul claro proporcional ao tempo restante da etapa
+- Aguardando peso → todos os LEDs em azul escuro; ao iniciar → muda para azul claro
+- Buzzer: 3 beeps curtos ascendentes quando falta 1 segundo na etapa
+- Buzzer: 3 beeps descendentes (2000→1500→1000Hz) ao finalizar a receita
+- `BuzzerManager`: fila de beeps com frequências independentes por slot
+- `ILedStrip`: cores `lightBlue` e `darkBlue`
+
+### Fixed
+- `EventBus::MAX_HANDLERS` expandido de 64 para 96 — overflow silencioso causava
+  `WeightUpdated` do `RecipeManager` ser descartado, impedindo início da contagem regressiva
+
+## [1.7.0] - 2026-07-04
+
+### Added
+- Modo de receita ativo no dispositivo: ao selecionar receita, display entra em tela dedicada
+- Tela de receita: etapa atual, tipo, timer crescente total (nunca zera), regressivo da etapa, peso atual e água alvo
+- Disparo automático do timer ao detectar mudança de peso ≥ 1.5g; etapa "Aguardar" inicia imediatamente
+- Avanço automático de etapa ao esgotar o tempo; volta ao modo normal ao concluir todas as etapas
+- Menu com confirmação em dois passos: `[2L]` marca `ok?`, botão 1 cancela, segundo `[2L]` ou clique simples ativa
+- Timer total acumula tempo de todas as etapas (não reseta entre elas)
+- `RecipeManager` carrega receitas do LittleFS ao abrir o menu
+- Clique longo botão 2 cancela receita ativa e volta à tela normal
+- Novos eventos: `RecipeStepStarted`, `RecipeStepTick`, `RecipeStepCompleted`, `RecipeFinished`
+
+## [1.6.0] - 2026-07-04
+
+### Added
+- HAL layer: `IFileSystem` + `Esp32FileSystem` (LittleFS, formatOnFail)
+- Core `RecipeStorage`: CRUD de receitas em JSON no LittleFS (`/recipes/<id>.json`)
+- Aba **Receitas** (primeira aba em `/config`) com lista, cadastro e edição
+- Estrutura de receita: título, moagem, água total, café (g), temperatura, etapas
+- Etapas com tipo (Despejo, Flor, Aguardar, Redemoinho, Mexa, Personalizado), água, duração, detalhe
+- Sugestão automática de água restante ao adicionar nova etapa
+- Campo de água desabilitado e zerado automaticamente ao selecionar "Aguardar"
+- Validação ao salvar: impede salvar se água total não foi totalmente distribuída
+- Tempo total da receita calculado em tempo real e exibido no formulário
+- Lista de receitas exibe água total e tempo total (M:SS) por receita
+- `totalSecs` e `waterTotal` incluídos no índice de receitas
+- `bblanchon/ArduinoJson @ ^6.21.5` adicionado ao `platformio.ini`
+- `-DARDUINOJSON_ENABLE_PROGMEM=0` para compatibilidade com C++17 no ESP32
+
+## [1.5.0] - 2026-07-04
+
+### Added
+- Modo de receitas com menu de seleção no display
+- `RecipeManager`: máquina de estados Menu/Idle com catálogo de receitas
+- Menu ativado por clique longo no botão 2
+- Botão 1 navega para baixo (com scroll de 3 itens visíveis e indicadores `^`/`v`)
+- Clique longo botão 2 seleciona o item; clique longo botão 1 cancela
+- "Sem Receita" volta ao modo de pesagem normal
+- Receita 1/2/3 fecham o menu (stub — sem ação ainda)
+- `Button2LongPressed` adicionado ao `ButtonManager`
+- Novos eventos: `Button2LongPressed`, `RecipeMenuOpen`, `RecipeSelected`, `RecipeCancelled`
+- `DisplayManager`: estado `RecipeMenu` com layout de menu e hints de navegação
+
+## [1.4.1] - 2026-07-04
+
+### Added
+- Ícone de status do timer ao lado do tempo no display
+  - **▶** (triângulo) quando o timer está rodando
+  - **⏸** (dois retângulos) quando pausado ou parado
+- `IDisplay`: `drawVLine()`, `drawBox()`, `drawTriangle()`
+- `DisplayManager` assina `TimerStarted` e `TimerPaused` para atualizar o ícone em tempo real
+
+## [1.4.0] - 2026-07-04
+
+### Added
+- Aba Balança: card "Filtro de leitura" com 4 sliders ajustáveis pela interface web
+  - Suavização (EMA alpha 1–50%)
+  - Sensibilidade / deadband (0.1–5.0g)
+  - Zona morta no zero (0.1–10.0g)
+  - Velocidade de leitura (1–20 amostras)
+- Endpoints `GET /scale/filter` e `POST /scale/filter`
+- Configurações do filtro persistidas em NVS
+- `ScaleManager::setFilterConfig()` aplica e persiste parâmetros em runtime
+- Mensagens de sucesso nas configurações somem automaticamente após 3s
+
+## [1.3.0] - 2026-07-04
+
+### Changed
+- Página `/config` reformulada com layout de tabs: Balança, LEDs, WiFi, Dispositivo
+- Scan de redes WiFi lazy (só carrega ao abrir a aba WiFi)
+- Browser lembra a última aba aberta via `localStorage`
+- Aba LEDs: guia de cores em formato de tabela com bolinha animada, status e descrição de cada cor
+
+## [1.2.1] - 2026-07-04
+
+### Fixed
+- Display não mostrava mais "Sem calibração" desnecessariamente ao ligar com sensor já calibrado
+- `ScaleManager::begin()` publica `ScaleCalibrated` imediatamente se calibração existe no NVS
+- `DisplayManager` sincroniza estado de calibração diretamente do `ScaleManager` ao sair do logo splash
+
+## [1.2.0] - 2026-07-04
+
+### Added
+- Tela de logo no boot: exibe bitmap 128×64 por 3 segundos antes de iniciar o WiFi
+- `logo.h`: bitmap do logo em PROGMEM
+- `IDisplay::drawBitmap()` + `Esp32Display::drawBitmap()` usando `drawXBMP` do U8g2
+- `DisplayManager`: estado `SplashLogo` bloqueia eventos WiFi durante exibição; ao terminar vai direto para splash de IP se já conectou
+
 ## [1.1.0] - 2026-07-04
 
 ### Added

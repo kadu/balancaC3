@@ -29,6 +29,10 @@ void ButtonManager::begin() {
     _btn2.onPress([this]() {
         _eventBus.publish({events::EventType::Button2Pressed});
     });
+
+    _btn2.onLongPress([this]() {
+        _eventBus.publish({events::EventType::Button2LongPressed});
+    });
 }
 
 void ButtonManager::loop() {
