@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- OTA pela página web nunca gravava o firmware: `GET /update` era registrado como `HTTP_ANY` antes do handler de upload, então o POST caía nele, os bytes eram descartados e o browser recebia 200 com falso sucesso. Handler de upload passou a ser registrado primeiro
+
+### Added
+- Seleção de receita pela interface web, com a lista completa de passos: passo atual destacado com barra de progresso, decorrido e restante; passos anteriores riscados e próximos visíveis
+- Alvo de água acumulado por passo e barra em espera quando o passo aguarda o gatilho de peso
+- `RecipeManager::startRecipe()` / `cancelRecipe()` e acessores read-only do estado ativo
+- Endpoint `GET /recipe/start?id=<n>` (id=0 encerra) — mesma máquina de estados do menu físico
+- Estado da receita (`rid`, `rstep`, `rn`, `rel`, `rrem`, `rtot`, `rrun`) em `/scale/weight`
+- Rodapé com versão, data/hora do build e hash do git nas páginas principal e de configuração
+- Endpoint `GET /build` e `scripts/build_info.py`, que regera `include/build_info.h` a cada build
+- `FIRMWARE_VERSION` em `config.h` (1.10.0-dev)
+
+### Changed
+- Cancelamento de receita centralizado em `cancelRecipe()`, antes duplicado em quatro pontos
+- `CLAUDE.md`: upload passa a ser por rede (espota) por padrão; serial só com a placa no USB
+
 ### Added
 - Timer exibido na interface web com ícone ▶/⏸, espelhando o layout do display OLED
 - `TimerManager::elapsedSeconds()` e `isRunning()` para consulta read-only do estado do timer

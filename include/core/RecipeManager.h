@@ -56,6 +56,21 @@ public:
     bool isMenuOpen()   const { return _state == State::Menu;   }
     bool isRecipeActive() const { return _state == State::Active; }
 
+    // Web control. The device menu and the web drive the same state machine, so
+    // a recipe started from either source shows up on both.
+    bool startRecipe(uint16_t id);   // id == 0 cancels; false if load failed
+    void cancelRecipe();
+
+    // Read-only state for the web UI — polled instead of mirrored from events,
+    // so the values are never a tick behind.
+    uint16_t activeRecipeId()    const { return _activeRecipeId; }
+    uint8_t  currentStepIndex()  const { return _currentStep; }
+    uint8_t  stepCount()         const { return _stepCount; }
+    uint32_t stepElapsedSecs()   const { return _stepElapsedMs / 1000; }
+    uint32_t stepRemainingSecs() const;
+    uint32_t totalElapsedSecs()  const { return _totalElapsedMs / 1000; }
+    bool     isStepRunning()     const { return _stepRunning; }
+
 private:
     enum class State : uint8_t { Idle, Menu, Active };
 
@@ -64,6 +79,7 @@ private:
     events::EventBus& _eventBus;
     State             _state         = State::Idle;
     uint8_t           _selectedIndex = 0;
+    uint16_t          _activeRecipeId = 0;
     uint8_t           _itemCount     = 0;
     bool              _confirmed     = false;
 

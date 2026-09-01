@@ -42,8 +42,7 @@ void RecipeManager::onEvent(const events::Event& event) {
             }
             else if (_state == State::Active) {
                 // Long press exits recipe mode
-                _state = State::Idle;
-                _eventBus.publish({events::EventType::RecipeCancelled});
+                cancelRecipe();
             }
             break;
 
@@ -128,18 +127,34 @@ void RecipeManager::openMenu() {
 }
 
 void RecipeManager::closeMenu() {
-    _state = State::Idle;
+    cancelRecipe();
+}
+
+// ── Web control ──────────────────────────────────────────────────────────────
+bool RecipeManager::startRecipe(uint16_t id) {
+    if (id == 0) { cancelRecipe(); return true; }
+    activateRecipe(id);
+    return _state == State::Active;
+}
+
+void RecipeManager::cancelRecipe() {
+    _state          = State::Idle;
+    _activeRecipeId = 0;
     _eventBus.publish({events::EventType::RecipeCancelled});
+}
+
+uint32_t RecipeManager::stepRemainingSecs() const {
+    if (_state != State::Active || _currentStep >= _stepCount) return 0;
+    uint32_t dur = _steps[_currentStep].duration;
+    uint32_t el  = _stepElapsedMs / 1000;
+    return (dur > el) ? dur - el : 0;
 }
 
 void RecipeManager::selectCurrent() {
     const Recipe& r = _menuItems[_selectedIndex];
     _state = State::Idle;
-    if (r.id == 0) {
-        _eventBus.publish({events::EventType::RecipeCancelled});
-    } else {
-        activateRecipe(r.id);
-    }
+    if (r.id == 0) cancelRecipe();
+    else           activateRecipe(r.id);
 }
 
 void RecipeManager::publishMenu() {
@@ -150,11 +165,11 @@ void RecipeManager::publishMenu() {
 // ── Active mode ───────────────────────────────────────────────────────────────
 void RecipeManager::activateRecipe(uint16_t id) {
     String json = _storage.loadRecipe(id);
-    if (json.isEmpty()) { _eventBus.publish({events::EventType::RecipeCancelled}); return; }
+    if (json.isEmpty()) { cancelRecipe(); return; }
 
     DynamicJsonDocument doc(4096);
     if (deserializeJson(doc, json) != DeserializationError::Ok) {
-        _eventBus.publish({events::EventType::RecipeCancelled}); return;
+        cancelRecipe(); return;
     }
 
     const char* title = doc["title"] | "Receita";
@@ -174,9 +189,10 @@ void RecipeManager::activateRecipe(uint16_t id) {
         _stepCount++;
     }
 
-    if (_stepCount == 0) { _eventBus.publish({events::EventType::RecipeCancelled}); return; }
+    if (_stepCount == 0) { cancelRecipe(); return; }
 
     _state           = State::Active;
+    _activeRecipeId  = id;
     _lastWeight      = 0.0f;
     _totalElapsedMs  = 0;
     _recipeStartMs   = 0;
@@ -253,7 +269,8 @@ void RecipeManager::advanceStep() {
 
     uint8_t next = _currentStep + 1;
     if (next >= _stepCount) {
-        _state = State::Idle;
+        _state          = State::Idle;
+        _activeRecipeId = 0;
         _eventBus.publish({events::EventType::RecipeFinished});
     } else {
         startStep(next);

@@ -13,6 +13,7 @@ namespace core {
 class ScaleManager;
 class RecipeStorage;
 class TimerManager;
+class RecipeManager;
 
 class WebApp final : public events::IEventHandler {
 public:
@@ -22,6 +23,7 @@ public:
     void setScaleManager(ScaleManager* scale)     { _scale   = scale;   }
     void setRecipeStorage(RecipeStorage* storage) { _recipes = storage; }
     void setTimerManager(TimerManager* timer)     { _timer   = timer;   }
+    void setRecipeManager(RecipeManager* recipe)  { _recipeMgr = recipe; }
 
     void begin();
     void loop();
@@ -37,6 +39,7 @@ private:
     ScaleManager*     _scale          = nullptr;
     RecipeStorage*    _recipes        = nullptr;
     TimerManager*     _timer          = nullptr;
+    RecipeManager*    _recipeMgr      = nullptr;
     bool              _running          = false;
     bool              _routesRegistered = false;
     bool              _pendingRestart   = false;
@@ -54,6 +57,7 @@ private:
     void stopServer();
     void registerRoutes();
 
+    void handleBuildInfo();
     void handleRoot();
     void handleConfig();
     void handleConfigWifi();
@@ -75,6 +79,7 @@ private:
     void handleRecipeGet();
     void handleRecipeSave();
     void handleRecipeDelete();
+    void handleRecipeStart();
     void handleButtonAction();
 };
 
