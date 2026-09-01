@@ -152,16 +152,22 @@ void OtaManager::startOta(const char* ip) {
 }
 
 void OtaManager::registerHttpRoute() {
-    _server.on("/update", [this]() {
-        _server.send(200, "text/html", UPDATE_HTML);
-    });
-
+    // Order matters. IWebServer::on() registers as HTTP_ANY, so it also matches
+    // POST; the framework picks the FIRST handler whose canHandle() passes. With
+    // the page registered first, POST /update landed on a handler that has no
+    // upload function, so the firmware bytes were parsed and discarded while the
+    // browser still got a 200. Registering the POST-only upload handler first
+    // makes GET fall through to the page and POST reach the flasher.
     _server.onUpload("/update",
         [this]() { handleUploadCompletion(); },
         [this](hal::UploadStatus status, const uint8_t* data, size_t len) {
             handleUploadChunk(status, data, len);
         }
     );
+
+    _server.on("/update", [this]() {
+        _server.send(200, "text/html", UPDATE_HTML);
+    });
 }
 
 void OtaManager::handleUploadCompletion() {

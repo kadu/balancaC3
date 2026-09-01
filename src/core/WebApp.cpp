@@ -2,8 +2,10 @@
 #include "core/ScaleManager.h"
 #include "core/RecipeStorage.h"
 #include "core/TimerManager.h"
+#include "core/RecipeManager.h"
 #include "events/EventType.h"
 #include "config.h"
+#include "build_info.h"
 #include <Arduino.h>
 #include <cstdio>
 
@@ -45,6 +47,32 @@ a.btn:active{background:var(--bh)}
 .pbn{font-size:1.02em;font-weight:bold}
 .pbl{font-size:.74em;opacity:.75}
 .hint{font-size:.7em;color:var(--sub);margin-top:.45em;line-height:1.4}
+.lft{text-align:left}
+.rttl{font-size:.8em;color:var(--sub);margin-bottom:.55em}
+.rbar{display:flex;gap:.5em;align-items:center}
+select{flex:1;min-width:0;padding:.55em .6em;border:1px solid var(--bdr);border-radius:6px;background:var(--card);color:var(--text);font-family:inherit;font-size:.92em}
+.rgo{padding:.55em 1.1em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-family:inherit;font-size:.92em;cursor:pointer;white-space:nowrap}
+.rgo.stop{background:#ef4444}
+.rtot{font-size:.8em;color:var(--sub);margin:.7em 0 .1em;display:flex;justify-content:space-between}
+.steps{list-style:none;margin:.5em 0 0;padding:0}
+.stp{border-left:3px solid var(--bdr);padding:.5em .1em .5em .7em;margin:0 0 .35em;opacity:.55;transition:opacity .2s}
+.stp.next{opacity:.85}
+.stp.cur{opacity:1;border-left-color:var(--btn);background:rgba(128,128,128,.09);border-radius:0 6px 6px 0}
+.stp.done{opacity:.4}
+.stp.done .sname{text-decoration:line-through}
+.srow{display:flex;justify-content:space-between;align-items:baseline;gap:.5em}
+.sname{font-size:.95em;font-weight:600}
+.stp.cur .sname{color:var(--btn)}
+.sdur{font-size:.8em;color:var(--sub);white-space:nowrap}
+.swtr{font-size:.78em;color:var(--sub);margin-top:.15em}
+.bar{height:7px;background:var(--bdr);border-radius:4px;overflow:hidden;margin:.5em 0 .3em}
+.bar>i{display:block;height:100%;width:0;background:var(--btn);border-radius:4px;transition:width .25s linear}
+.bar.wait>i{background:var(--warn);width:100%;animation:pl 1.4s ease-in-out infinite}
+@keyframes pl{0%,100%{opacity:.25}50%{opacity:.8}}
+.slive{display:flex;justify-content:space-between;font-size:.78em;color:var(--sub);font-variant-numeric:tabular-nums}
+.stp.cur .slive b{color:var(--text);font-weight:600}
+.rmsg{font-size:.8em;color:var(--sub);margin-top:.5em;min-height:1.1em}
+.ver{text-align:right;font-size:.68em;color:var(--sub);opacity:.7;margin:.4em .3em 1.4em;font-variant-numeric:tabular-nums}
 </style></head><body>
 <div class="hdr"><h1>BalancaC3</h1><div style="display:flex;align-items:center;gap:.5em"><a href="/config" style="display:flex;align-items:center;gap:.3em;color:var(--text);text-decoration:none;font-size:.88em;border:1px solid var(--sub);border-radius:20px;padding:.3em .75em"><span style="font-size:1.1em">&#9881;</span>Configurações</a><button class="thm" id="thm" onclick="tog()"></button></div></div>
 <div class="card">
@@ -59,6 +87,16 @@ a.btn:active{background:var(--bh)}
   <div style="margin-top:.8em"><button onclick="doTare()" style="padding:.6em 1.6em;background:var(--btn);color:#fff;border:none;border-radius:6px;font-size:.95em;cursor:pointer">Tarar</button></div>
   <div id="tare-msg" style="font-size:.82em;color:var(--sub);margin-top:.4em;min-height:1.2em"></div>
 </div>
+<div class="card lft">
+  <div class="rttl">Receita — escolha e inicie o preparo</div>
+  <div class="rbar">
+    <select id="rsel"><option value="0">carregando...</option></select>
+    <button class="rgo" id="rgo" onclick="rgoClick()">Iniciar</button>
+  </div>
+  <div class="rmsg" id="rmsg"></div>
+  <div class="rtot" id="rtot" style="display:none"><span id="rtotL"></span><span id="rtotR"></span></div>
+  <ol class="steps" id="rsteps"></ol>
+</div>
 <div class="card">
   <div style="font-size:.8em;color:var(--sub);margin-bottom:.7em">Controles — toque rapido ou segure</div>
   <div class="btns">
@@ -72,6 +110,7 @@ a.btn:active{background:var(--bh)}
     </div>
   </div>
 </div>
+<div class="ver" id="ver"></div>
 <script>
 var H=document.documentElement,D=document;
 function applyDark(d){H.classList.toggle('dark',d);D.getElementById('thm').textContent=d?'Claro':'Escuro'}
@@ -90,6 +129,7 @@ function flash(id){var e=D.getElementById(id);e.classList.remove('flash');void e
     D.getElementById('tval').textContent=tm+':'+(tsx<10?'0':'')+tsx;
     D.getElementById('tico').innerHTML=d.trun?'&#9654;':'&#9208;';
     D.getElementById('timer').classList.toggle('run',!!d.trun);
+    updRecipe(d);
     var dot=D.getElementById('dot'),st=D.getElementById('sensor-status');
     var wv=D.getElementById('weight-val'),wu=D.getElementById('weight-unit');
     var rv=D.getElementById('raw-val'),cw=D.getElementById('cal-warn');
@@ -114,6 +154,86 @@ function doTare(){
     var m=D.getElementById('tare-msg');m.textContent='Tarado!';setTimeout(function(){m.textContent=''},2000);
   }).catch(function(){D.getElementById('tare-msg').textContent='Erro ao tarar.'});
 }
+/* ── receita ───────────────────────────────────────────────────────────── */
+var rSteps=null,rTitle='',rLoadedId=0,rKey='';
+function fmt(s){s=s|0;var m=(s/60)|0,x=s%60;return m+':'+(x<10?'0':'')+x}
+function esc(t){var e=D.createElement('div');e.textContent=t==null?'':t;return e.innerHTML}
+function msg(t){var m=D.getElementById('rmsg');m.textContent=t;
+  if(t)setTimeout(function(){if(m.textContent===t)m.textContent=''},3000)}
+(function loadRecipes(){
+  fetch('/recipes').then(function(r){return r.json()}).then(function(a){
+    var s=D.getElementById('rsel');s.innerHTML='';
+    if(!a||!a.length){s.innerHTML='<option value="0">nenhuma receita salva</option>';return}
+    a.forEach(function(r){
+      var o=D.createElement('option');o.value=r.id;
+      o.textContent=r.title+(r.waterTotal?' — '+r.waterTotal+'ml':'');
+      s.appendChild(o);
+    });
+  }).catch(function(){});
+})();
+function rgoClick(){
+  var stop=D.getElementById('rgo').classList.contains('stop');
+  var id=stop?0:(D.getElementById('rsel').value|0);
+  if(!stop&&!id){msg('Selecione uma receita.');return}
+  fetch('/recipe/start?id='+id).then(function(r){if(!r.ok)msg('Falha ao iniciar a receita.')})
+    .catch(function(){msg('Falha ao iniciar a receita.')});
+}
+// Steps are static once the recipe starts, so fetch them once and keep them.
+function ensureRecipe(id){
+  if(rLoadedId===id)return;
+  rLoadedId=id;rSteps=null;
+  fetch('/recipe?id='+id).then(function(r){return r.json()}).then(function(o){
+    rTitle=o.title||'Receita';rSteps=o.steps||[];rKey='';
+  }).catch(function(){rLoadedId=0});
+}
+// Full list is always rendered — past steps struck through, current one expanded
+// with its live bar, upcoming ones legible so you can see what comes next.
+function renderSteps(cur){
+  var ol=D.getElementById('rsteps');ol.innerHTML='';
+  if(!rSteps)return;
+  var cum=0;
+  rSteps.forEach(function(s,i){
+    cum+=(s.water|0);
+    var li=D.createElement('li');
+    li.className='stp '+(i<cur?'done':i===cur?'cur':i===cur+1?'next':'');
+    var h='<div class="srow"><span class="sname">'+(i+1)+'. '+esc(s.type||'Passo')+'</span>'+
+          '<span class="sdur">'+fmt(s.duration|0)+'</span></div>'+
+          '<div class="swtr">'+((s.water|0)?'+'+(s.water|0)+' ml':'sem agua')+
+          ' → alvo '+cum+' ml</div>';
+    if(i===cur)h+='<div class="bar" id="rbar"><i id="rbari"></i></div>'+
+                  '<div class="slive"><span id="relw"></span><span id="rremw"></span></div>';
+    li.innerHTML=h;ol.appendChild(li);
+  });
+}
+function updRecipe(d){
+  var go=D.getElementById('rgo'),tot=D.getElementById('rtot'),sel=D.getElementById('rsel');
+  if(!d.ract){
+    go.textContent='Iniciar';go.classList.remove('stop');sel.disabled=false;
+    if(rLoadedId){rLoadedId=0;rSteps=null;rKey='';
+      D.getElementById('rsteps').innerHTML='';tot.style.display='none';msg('Receita encerrada.')}
+    return;
+  }
+  ensureRecipe(d.rid);
+  go.textContent='Encerrar';go.classList.add('stop');sel.disabled=true;
+  var key=d.rid+'|'+d.rstep+'|'+(rSteps?rSteps.length:0);
+  if(key!==rKey){rKey=key;renderSteps(d.rstep)}
+  tot.style.display='flex';
+  D.getElementById('rtotL').textContent=(rTitle||'Receita')+' — passo '+(d.rstep+1)+'/'+d.rn;
+  D.getElementById('rtotR').textContent='total '+fmt(d.rtot);
+  var bar=D.getElementById('rbar');if(!bar)return;
+  var dur=(rSteps&&rSteps[d.rstep])?(rSteps[d.rstep].duration|0):0;
+  if(!d.rrun){
+    bar.className='bar wait';D.getElementById('rbari').style.width='100%';
+    D.getElementById('relw').innerHTML='<b>aguardando agua...</b>';
+    D.getElementById('rremw').textContent='inicia ao detectar peso';
+  }else{
+    bar.className='bar';
+    D.getElementById('rbari').style.width=(dur?Math.min(100,d.rel*100/dur):0)+'%';
+    D.getElementById('relw').innerHTML='decorrido <b>'+fmt(d.rel)+'</b>';
+    D.getElementById('rremw').innerHTML=dur?('faltam <b>'+fmt(d.rrem)+'</b>'):'sem limite';
+  }
+}
+/* ── botoes ────────────────────────────────────────────────────────────── */
 var LONG_MS=700,hold={};
 [1,2].forEach(function(n){
   var e=D.getElementById('pb'+n);
@@ -134,7 +254,11 @@ var LONG_MS=700,hold={};
     e.classList.remove('hold','long');
   });
 });
-</script></body></html>
+fetch('/build').then(function(r){return r.text()}).then(function(t){
+  document.getElementById('ver').textContent=t;
+}).catch(function(){});
+</script>
+</body></html>
 )html";
 
 // ── config page ──────────────────────────────────────────────────────────────
@@ -180,6 +304,7 @@ input:focus{border-color:var(--btn)}
 #confirm .yes{background:var(--dan);color:#fff}
 #confirm .no{background:var(--bdr);color:var(--text)}
 p.hint{color:var(--sub);font-size:.83em;margin:.2em 0 .5em}
+.ver{text-align:right;font-size:.68em;color:var(--sub);opacity:.7;margin:.4em .3em 1.4em;font-variant-numeric:tabular-nums}
 </style></head><body>
 <div class="hdr">
   <a class="back" href="/">&#8592; Voltar</a>
@@ -371,6 +496,7 @@ p.hint{color:var(--sub);font-size:.83em;margin:.2em 0 .5em}
   </div>
 </div>
 
+<div class="ver" id="ver"></div>
 <script>
 var D=document,H=D.documentElement;
 function applyDark(d){H.classList.toggle('dark',d);D.getElementById('thm').textContent=d?'Claro':'Escuro'}
@@ -641,7 +767,11 @@ function saveWifi(){
   .then(function(r){return r.text()}).then(function(){showMsg('wifi-msg',true,'Salvo! Reconectando...')})
   .catch(function(){showMsg('wifi-msg',false,'Erro ao salvar.')});
 }
-</script></body></html>
+fetch('/build').then(function(r){return r.text()}).then(function(t){
+  document.getElementById('ver').textContent=t;
+}).catch(function(){});
+</script>
+</body></html>
 )html";
 
 namespace core {
@@ -699,6 +829,8 @@ void WebApp::registerRoutes() {
     _server.on("/config/reset",   [this]() { handleConfigReset(); });
     _server.on("/config/ssid",    [this]() { handleCurrentSsid(); });
     _server.on("/button",         [this]() { handleButtonAction(); });
+    _server.on("/recipe/start",   [this]() { handleRecipeStart(); });
+    _server.on("/build",          [this]() { handleBuildInfo(); });
     _server.on("/scale/weight",   [this]() { handleScaleWeight(); });
     _server.on("/scale/tare",     [this]() { handleScaleTare(); });
     _server.on("/scale/calibrate",[this]() { handleScaleCalibrateStep2(); });
@@ -735,6 +867,16 @@ void WebApp::stopServer() {
     if (!_running) return;
     _server.stop();
     _running = false;
+}
+
+// Served as its own endpoint rather than substituted into the HTML: the config
+// page is ~30 KB, and copying it on the heap just to swap a placeholder would
+// cost tens of KB per request with WiFi up. The pages stay static literals.
+void WebApp::handleBuildInfo() {
+    char buf[96];
+    snprintf(buf, sizeof(buf), "v%s \xC2\xB7 %s \xC2\xB7 %s",
+             FIRMWARE_VERSION, BUILD_STAMP, BUILD_GIT_HASH);
+    _server.send(200, "text/plain; charset=utf-8", buf);
 }
 
 void WebApp::handleRoot() {
@@ -813,16 +955,31 @@ void WebApp::handleScaleWeight() {
     bool    ready      = _scale ? _scale->isReady()      : false;
     uint32_t tsec      = _timer ? _timer->elapsedSeconds() : 0;
     bool     trun      = _timer ? _timer->isRunning()      : false;
-    char    buf[224];
+
+    bool     ract  = _recipeMgr && _recipeMgr->isRecipeActive();
+    uint16_t rid   = ract ? _recipeMgr->activeRecipeId()    : 0;
+    uint8_t  rstep = ract ? _recipeMgr->currentStepIndex()  : 0;
+    uint8_t  rn    = ract ? _recipeMgr->stepCount()         : 0;
+    uint32_t rel   = ract ? _recipeMgr->stepElapsedSecs()   : 0;
+    uint32_t rrem  = ract ? _recipeMgr->stepRemainingSecs() : 0;
+    uint32_t rtot  = ract ? _recipeMgr->totalElapsedSecs()  : 0;
+    bool     rrun  = ract && _recipeMgr->isStepRunning();
+
+    char    buf[320];
     snprintf(buf, sizeof(buf),
              "{\"grams\":%.2f,\"raw\":%ld,\"calibrated\":%s,\"ready\":%s,"
              "\"b1c\":%u,\"b1l\":%u,\"b2c\":%u,\"b2l\":%u,"
-             "\"tsec\":%lu,\"trun\":%s}",
+             "\"tsec\":%lu,\"trun\":%s,"
+             "\"ract\":%s,\"rid\":%u,\"rstep\":%u,\"rn\":%u,"
+             "\"rel\":%lu,\"rrem\":%lu,\"rtot\":%lu,\"rrun\":%s}",
              grams, (long)raw,
              calibrated ? "true" : "false",
              ready      ? "true" : "false",
              _b1Clicks, _b1Longs, _b2Clicks, _b2Longs,
-             (unsigned long)tsec, trun ? "true" : "false");
+             (unsigned long)tsec, trun ? "true" : "false",
+             ract ? "true" : "false", rid, rstep, rn,
+             (unsigned long)rel, (unsigned long)rrem, (unsigned long)rtot,
+             rrun ? "true" : "false");
     _server.send(200, "application/json", buf);
 }
 
@@ -917,6 +1074,17 @@ void WebApp::handleRecipeSave() {
     char buf[32];
     snprintf(buf, sizeof(buf), "{\"id\":%u}", id);
     _server.send(200, "application/json", buf);
+}
+
+// Start (or cancel, with id=0) a recipe from the web. Drives the very same
+// RecipeManager state machine the device menu drives.
+void WebApp::handleRecipeStart() {
+    if (!_recipeMgr) { _server.send(503, "text/plain", "no recipe manager"); return; }
+    String idStr = _server.arg("id");
+    if (idStr.isEmpty()) { _server.send(400, "text/plain", "missing id"); return; }
+    uint16_t id = static_cast<uint16_t>(idStr.toInt());
+    if (!_recipeMgr->startRecipe(id)) { _server.send(404, "text/plain", "not found"); return; }
+    _server.send(200, "text/plain", "OK");
 }
 
 // Emit the same event pair a physical button produces: Down gives the LED flash

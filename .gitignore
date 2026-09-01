@@ -3,3 +3,6 @@
 *.pyc
 __pycache__/
 *.code-workspace
+
+# Gerado por scripts/build_info.py a cada build
+include/build_info.h
