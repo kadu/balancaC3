@@ -2,7 +2,7 @@
 
 // Versao do firmware — subir ao lancar release (ver CHANGELOG.md).
 // A data/hora do build e o hash do git vem de build_info.h, gerado a cada build.
-static constexpr char FIRMWARE_VERSION[] = "1.10.0-dev";
+static constexpr char FIRMWARE_VERSION[] = "1.10.0";
 
 // Serial
 static constexpr uint32_t SERIAL_BAUD_RATE = 115200;

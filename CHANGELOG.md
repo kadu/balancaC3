@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-- OTA pela página web nunca gravava o firmware: `GET /update` era registrado como `HTTP_ANY` antes do handler de upload, então o POST caía nele, os bytes eram descartados e o browser recebia 200 com falso sucesso. Handler de upload passou a ser registrado primeiro
+## [1.10.0] - 2026-08-31
+
+A interface web deixa de ser só um mostrador de peso: timer, botões e receitas
+passo a passo funcionam pelo navegador, dirigindo a mesma máquina de estados do
+dispositivo.
 
 ### Added
 - Seleção de receita pela interface web, com a lista completa de passos: passo atual destacado com barra de progresso, decorrido e restante; passos anteriores riscados e próximos visíveis
@@ -16,40 +19,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `RecipeManager::startRecipe()` / `cancelRecipe()` e acessores read-only do estado ativo
 - Endpoint `GET /recipe/start?id=<n>` (id=0 encerra) — mesma máquina de estados do menu físico
 - Estado da receita (`rid`, `rstep`, `rn`, `rel`, `rrem`, `rtot`, `rrun`) em `/scale/weight`
-- Rodapé com versão, data/hora do build e hash do git nas páginas principal e de configuração
-- Endpoint `GET /build` e `scripts/build_info.py`, que regera `include/build_info.h` a cada build
-- `FIRMWARE_VERSION` em `config.h` (1.10.0-dev)
-
-### Changed
-- Cancelamento de receita centralizado em `cancelRecipe()`, antes duplicado em quatro pontos
-- `CLAUDE.md`: upload passa a ser por rede (espota) por padrão; serial só com a placa no USB
-
-### Added
 - Timer exibido na interface web com ícone ▶/⏸, espelhando o layout do display OLED
 - `TimerManager::elapsedSeconds()` e `isRunning()` para consulta read-only do estado do timer
 - `WebApp` recebe `TimerManager` via `setTimerManager()` e expõe `tsec`/`trun` em `/scale/weight`
-
-### Added
 - Espelhamento bidirecional dos botões na interface web: card "Controles" com Botão 1 e Botão 2
 - Endpoint `GET /button?n=<1|2>&a=<click|long>` publica `Button<N>Down` + `Button<N>Pressed`/`LongPressed`
 - `WebApp` subscreve os eventos de botão e expõe contadores `b1c/b1l/b2c/b2l` em `/scale/weight`
 - Botões da web usam pressionar-e-segurar com limiar de 700ms, igual ao gesto físico
+- Rodapé com versão, data/hora do build e hash do git nas páginas principal e de configuração
+- Endpoint `GET /build` e `scripts/build_info.py`, que regera `include/build_info.h` a cada build
+- `FIRMWARE_VERSION` em `config.h`
+- Jingle de inicialização: arpejo ascendente C-Mi-Sol (523→659→784 Hz) tocado durante o logo de boot
+- `SystemReady` publicado ao fim do `setup()` em `main.cpp`; `BuzzerManager` subscreve e toca a sequência de boas-vindas
+- Tela de erro permanente no display quando o sensor NAU7802 não é encontrado no boot
+- Evento `ScaleNotFound` publicado por `ScaleManager::begin()` em caso de falha de inicialização
+- `DisplayManager`: estado `ScaleError` exibe "NAU7802 / nao encontrado / Verifique I2C"
 
 ### Changed
 - `PIN_BUTTON_1` movido de GPIO 9 para GPIO 3
 - `PIN_BUTTON_2` movido de GPIO 10 para GPIO 1
 - `docs/schematic.svg` atualizado com novos pinos dos botões
 - `README.md` atualizado com pinos corretos e manual de uso completo (timer, receitas, exemplos V60)
+- Cancelamento de receita centralizado em `cancelRecipe()`, antes duplicado em quatro pontos
+- `CLAUDE.md`: upload passa a ser por rede (espota) por padrão; serial só com a placa no USB
 
-### Added
-- Jingle de inicialização: arpejo ascendente C-Mi-Sol (523→659→784 Hz) tocado durante o logo de boot
-- `SystemReady` publicado ao fim do `setup()` em `main.cpp`
-- `BuzzerManager` subscreve `SystemReady` e dispara a sequência de boas-vindas
-
-### Added
-- Tela de erro permanente no display quando sensor NAU7802 não é encontrado no boot
-- Evento `ScaleNotFound` publicado por `ScaleManager::begin()` em caso de falha de inicialização
-- `DisplayManager`: estado `ScaleError` exibe "NAU7802 / nao encontrado / Verifique I2C"
+### Fixed
+- OTA pela página web nunca gravava o firmware: `GET /update` era registrado como `HTTP_ANY` antes do handler de upload, então o POST caía nele, os bytes eram descartados e o browser recebia 200 com falso sucesso. Handler de upload passou a ser registrado primeiro
 
 ## [1.9.0] - 2026-07-04
 
