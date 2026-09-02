@@ -12,6 +12,9 @@ public:
     void begin() override;
     void tick() override;
 
+    void setTimings(uint16_t debounceMs, uint16_t clickMs, uint16_t longPressMs) override;
+    void ignoreFirstMs(uint16_t ms) override;
+
     void onDown(ButtonCallback cb) override;
     void onPress(ButtonCallback cb) override;
     void onLongPress(ButtonCallback cb) override;
@@ -25,6 +28,8 @@ public:
 
 private:
     OneButton _btn;
+    uint32_t  _readyAt = 0;      // millis a partir do qual tick() vale
+    bool      _ready   = true;   // sem ignoreFirstMs(), ja nasce pronto
 };
 
 } // namespace hal
