@@ -234,7 +234,9 @@ function updRecipe(d){
   }
 }
 /* ── botoes ────────────────────────────────────────────────────────────── */
-var LONG_MS=700,hold={};
+/* Espelha BUTTON_LONG_PRESS_MS de config.h — mantenha os dois em sincronia,
+   senao o gesto na web deixa de equivaler ao gesto no botao fisico. */
+var LONG_MS=1500,hold={};
 [1,2].forEach(function(n){
   var e=D.getElementById('pb'+n);
   e.addEventListener('contextmenu',function(ev){ev.preventDefault()});

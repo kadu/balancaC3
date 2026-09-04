@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Botões touch TTP223B não registravam clique simples: o firmware os tratava como `activeLow` com pull-up interno, herança do botão mecânico, mas o módulo sai de fábrica com o pad `AHLB` aberto, ou seja, **ativo em nível alto**. Com a leitura invertida o firmware via "pressionado" em repouso, abria o menu de receitas sozinho ~1,5s após o boot e nunca chegava na tara
+
+### Added
+- `BUTTON_ACTIVE_LOW` e `BUTTON_PULLUP_ACTIVE` em `config.h` — saída do TTP223B é CMOS push-pull, o pull-up interno é desnecessário e briga com o pino
+- `IButton::ignoreFirstMs()` descarta os primeiros `BUTTON_STARTUP_MS` (600ms) após o boot, cobrindo o tempo de auto-calibração do TTP223B em que a saída não tem significado
+- `IButton::setTimings(debounceMs, clickMs, longPressMs)` expõe os tempos do OneButton, antes fixos nos padrões da biblioteca
+- Clique duplo nos dois botões, publicando `Button1DoubleClick` / `Button2DoubleClick` (sem ação associada ainda), com flag `BUTTON_DOUBLE_CLICK` em `config.h`
+
+### Changed
+- Debounce dos botões de 50ms para 20ms: a saída do TTP223B já é digital e limpa, e o próprio CI leva até 220ms para responder em baixo consumo — os 50ms só somavam atraso e engoliam toques curtos
+- Limiar de clique longo de 800ms (padrão do OneButton) para 1500ms, já que o dedo fica no sensor mais tempo que num botão mecânico
+- `LONG_MS` do JS da página inicial acompanha `BUTTON_LONG_PRESS_MS`, para o botão da web continuar equivalendo ao físico
+
 ## [1.10.0] - 2026-08-31
 
 A interface web deixa de ser só um mostrador de peso: timer, botões e receitas
