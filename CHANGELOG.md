@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Botões touch TTP223B não registravam clique simples: o firmware os tratava como `activeLow` com pull-up interno, herança do botão mecânico, mas o módulo sai de fábrica com o pad `AHLB` aberto, ou seja, **ativo em nível alto**. Com a leitura invertida o firmware via "pressionado" em repouso, abria o menu de receitas sozinho ~1,5s após o boot e nunca chegava na tara
 
 ### Added
+- Tela "Comece o despejo" no OLED: ao selecionar uma receita cujo primeiro passo depende do despejo, o display mostra o aviso em vez de já abrir o acompanhamento, e só troca para a tela de progresso quando a balança detecta a mudança de peso. Passos que começam sozinhos (tipo `Aguardar`) continuam indo direto para o acompanhamento
 - `BUTTON_ACTIVE_LOW` e `BUTTON_PULLUP_ACTIVE` em `config.h` — saída do TTP223B é CMOS push-pull, o pull-up interno é desnecessário e briga com o pino
 - `IButton::ignoreFirstMs()` descarta os primeiros `BUTTON_STARTUP_MS` (600ms) após o boot, cobrindo o tempo de auto-calibração do TTP223B em que a saída não tem significado
 - `IButton::setTimings(debounceMs, clickMs, longPressMs)` expõe os tempos do OneButton, antes fixos nos padrões da biblioteca

@@ -27,6 +27,7 @@ private:
         SplashAp,
         Scale,
         RecipeMenu,
+        RecipeWaitingPour,
         RecipeActive,
         RecipeFinished,
         ScaleError,
@@ -78,6 +79,7 @@ private:
     void drawSplashConnected();
     void drawSplashAp();
     void drawRecipeMenu(const void* payload);
+    void drawRecipeWaitingPour();
     void drawRecipeActive();
     void drawScaleError();
 };
