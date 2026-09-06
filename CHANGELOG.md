@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.11.0] - 2026-09-05
+
+Botões touch e receitas ganham ajustes de usabilidade: o TTP223B responde de
+forma confiável ao clique simples e duplo, e o display guia o usuário a
+começar o despejo antes de acompanhar a receita.
+
 ### Fixed
 - Botões touch TTP223B não registravam clique simples: o firmware os tratava como `activeLow` com pull-up interno, herança do botão mecânico, mas o módulo sai de fábrica com o pad `AHLB` aberto, ou seja, **ativo em nível alto**. Com a leitura invertida o firmware via "pressionado" em repouso, abria o menu de receitas sozinho ~1,5s após o boot e nunca chegava na tara
 
