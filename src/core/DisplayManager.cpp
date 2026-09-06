@@ -155,7 +155,12 @@ void DisplayManager::onEvent(const events::Event& event) {
             transitionTo(State::ScaleError);
             break;
         case events::EventType::RecipeSelected:
-            _state = State::RecipeActive;
+            // _stepRunning ja reflete o primeiro passo (RecipeStepTick/Started sao
+            // publicados antes deste, no mesmo dispatch): se ele exige despejo,
+            // mostra o aviso ate a balanca detectar o peso mudando.
+            _state = _stepRunning ? State::RecipeActive : State::RecipeWaitingPour;
+            if (_state == State::RecipeWaitingPour) drawRecipeWaitingPour();
+            else                                     drawRecipeActive();
             break;
         case events::EventType::RecipeStepStarted:
         case events::EventType::RecipeStepTick:
@@ -172,6 +177,9 @@ void DisplayManager::onEvent(const events::Event& event) {
                 _stepIndex     = p->stepIndex;
                 _stepTotal     = p->totalSteps;
             }
+            // Despejo detectado enquanto o aviso estava na tela — troca para o
+            // acompanhamento normal.
+            if (_state == State::RecipeWaitingPour && _stepRunning) _state = State::RecipeActive;
             if (_state == State::RecipeActive) drawRecipeActive();
             break;
         }
@@ -371,6 +379,29 @@ void DisplayManager::drawRecipeActive() {
         snprintf(gwBuf, sizeof(gwBuf), "%.1fg", _lastWeight);
     _display.setFontLarge();
     _display.drawStringCenter(62, gwBuf);
+
+    _display.show();
+}
+
+// ── Recipe waiting for pour ──────────────────────────────────────────────────
+//
+//  line  8  │ Despejo  (1/4)              (small — mesmo cabecalho do drawRecipeActive)
+//  line 14  ├──────────────────────────── (hline)
+//  line 36  │      Comece o               (large, center)
+//  line 58  │      despejo                (large, center)
+//
+void DisplayManager::drawRecipeWaitingPour() {
+    _display.clear();
+
+    char hdr[40];
+    snprintf(hdr, sizeof(hdr), "%s  (%u/%u)", _stepType, _stepIndex + 1, _stepTotal);
+    _display.setFontSmall();
+    _display.drawStringCenter(8, hdr);
+    _display.drawHLine(0, 11, 128);
+
+    _display.setFontLarge();
+    _display.drawStringCenter(36, "Comece o");
+    _display.drawStringCenter(58, "despejo");
 
     _display.show();
 }

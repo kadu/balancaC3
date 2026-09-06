@@ -1,4 +1,5 @@
 #include "hal/Esp32Button.h"
+#include <Arduino.h>
 
 namespace hal {
 
@@ -26,7 +27,24 @@ Esp32Button::Esp32Button(uint8_t pin, bool activeLow, bool pullupActive)
 void Esp32Button::begin() {}
 
 void Esp32Button::tick() {
+    // Nao usa millis() < _readyAt direto: a comparacao quebraria no rollover de
+    // millis(). Depois que solta, o latch nunca mais e reavaliado.
+    if (!_ready) {
+        if (millis() < _readyAt) return;
+        _ready = true;
+    }
     _btn.tick();
+}
+
+void Esp32Button::setTimings(uint16_t debounceMs, uint16_t clickMs, uint16_t longPressMs) {
+    _btn.setDebounceMs(debounceMs);
+    _btn.setClickMs(clickMs);
+    _btn.setPressMs(longPressMs);
+}
+
+void Esp32Button::ignoreFirstMs(uint16_t ms) {
+    _readyAt = millis() + ms;
+    _ready   = false;
 }
 
 void Esp32Button::onDown(ButtonCallback cb) {

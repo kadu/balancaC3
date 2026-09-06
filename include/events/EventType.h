@@ -36,6 +36,8 @@ enum class EventType : uint8_t {
     Button1Down,
     Button2Down,
     Button2LongPressed,
+    Button1DoubleClick,
+    Button2DoubleClick,
     RecipeMenuOpen,
     RecipeSelected,
     RecipeCancelled,
